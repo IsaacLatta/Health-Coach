@@ -1,0 +1,25 @@
+[project]
+name = "health_coach"
+version = "0.1.0"
+description = "health_coach using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "crewai[tools]>=0.121.1,<1.0.0",
+    "scikit-learn>=1.7.0,<2.0.0",
+    "shap>=0.41.0"
+]
+
+[project.scripts]
+health_coach = "health_coach.main:run"
+run_crew = "health_coach.main:run"
+train = "health_coach.main:train"
+replay = "health_coach.main:replay"
+test = "health_coach.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"

@@ -1,0 +1,19 @@
+# Virtual environments
+.venv/
+env/
+venv/
+
+__pycache__/
+
+uv.lock
+
+.env
+
+.DS_Store
+
+.vscode/
+
+.pytest_cache/
+
+!out/.gitkeep
+out/*
