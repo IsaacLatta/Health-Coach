@@ -1,0 +1,25 @@
+%%{init:{
+  "theme":"dark",
+  "themeVariables":{
+    "primaryColor":"#4B0082",
+    "secondaryColor":"#6A0DAD",
+    "tertiaryColor":"#9370DB",
+    "edgeLabelBackground":"#301934",
+    "fontFamily":"Arial"
+  }
+}}%%
+flowchart TB
+  LC[Load Configuration]
+  LC --> RP["Report Pipeline"]
+  RP --> FPH[Fetch patient history]
+  FPH --> VPD[Validate patient data]
+  VPD --> CCS[Compute current state]
+  CCS --> AR[Compute reward]
+  AR --> CNA[Select next action]
+  CNA --> VA[Validate proposed action]
+  VA --> UC[Apply configuration update]
+  UC --> VCF[Validate configuration file]
+  VCF --> UPR[Update patient record]
+
+  class RP standout
+  classDef standout fill:#6A0DAD,stroke:#4B0082,stroke-width:3px,color:#ffffff,font-size:18px,padding:10px

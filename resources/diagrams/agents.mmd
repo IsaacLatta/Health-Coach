@@ -1,0 +1,37 @@
+%%{init:{
+  "theme":"dark",
+  "themeVariables":{
+    "primaryColor":"#4B0082",
+    "secondaryColor":"#6A0DAD",
+    "tertiaryColor":"#9370DB",
+    "edgeLabelBackground":"#301934",
+    "fontFamily":"Arial"
+  },
+  "flowchart":{
+    "curve":"basis"
+  }
+}}%%
+flowchart TB
+
+  subgraph Reporting["Reporting Pipeline Agents"]
+    direction LR
+    PA["Prediction Agent"]
+    EA["Explanation Agent"]
+    RA["Report Generation Agent"]
+    SA["Save Report Agent"]
+  end
+
+  subgraph RL["Reinforcement Learning Agents"]
+    direction LR
+    DMA["Data Manager Agent"]
+    RLA["RL Agent"]
+    CA["Configuration Agent"]
+  end
+
+  PA --> EA --> RA --> SA
+  SA --> DMA
+  DMA --> RLA
+  RLA --> CA
+
+  class RLA standout
+  classDef standout fill:#9370DB,stroke:#4B0082,stroke-width:3px,color:#ffffff,font-size:16px,padding:8px

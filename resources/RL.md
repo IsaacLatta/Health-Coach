@@ -70,6 +70,8 @@ The necessary tools needed to complete the above tasks are proposed below. Each 
 - **update_patient_history**  
     Open CSV, back-fill the previous row’s blank columns, then append a new row with blank _next_ columns, populated _current_ columns.
 
+![Task Flow](diagrams/rl_tasks.png)
+
 ### Agents
 
 Three agents are hypothesized, where each agent's tasks are correlated.
@@ -86,36 +88,11 @@ Three agents are hypothesized, where each agent's tasks are correlated.
   Validates and applies config changes.  
   **Tasks**: `load_configuration`, `update_configuration`, `validate_configuration_file`
 
+![Agent Flow](diagrams/agents.png)
 
 ### Integration
 
 The reinforcment centric tasks incorporation can be seen below. In summary, an obvious place for RL is after the original prediction->report pipeline, decoupling the RL from the rest of the system. Thus, leading to a much more modular and resuable component, later the RL system could be refactored into a generic RL pipeline to be used in other applications, where "application specific RL" can be injected, but the process remains constant (e.g load data, compute reward ... update data etc).Only loading the systems current configuration would need to be completed prior to or during the report generation/prediction pipeline.
-```mermaid
-flowchart TB
-  subgraph row1
-    direction LR
-    LD[Load Configuration|(load_configuration)]
-    LD-->RP[Report Pipeline]
-    RP --> FPH["Fetch patient history|(fetch_patient_data)"]
-    FPH --> VPD["Validate patient data|(validate_patient_data)"]
-    VPD --> CCS["Compute current state|(compute_current_state)"]
-  end
-  subgraph row2
-    direction RL
-    CCS --> AR["Compute reward|(apply_reward)"]
-    AR --> CNA["Select next action|(compute_action)"]
-    CNA --> VA["Validate proposed action|(validate_action)"]
-  end
-  subgraph row3
-    direction LR
-    VA --> UC["Apply configuration update(update_configuration)"]
-    UC --> VCF["Validate configuration file|(validate_configuration_file)"]
-    VCF --> UPR["Update patient record|(update_patient_data)"]
-  end
-  style row1 fill:none,stroke:none
-  style row2 fill:none,stroke:none
-  style row3 fill:none,stroke:none
-```
 
 ## Reinforcement Learning
 
@@ -197,3 +174,127 @@ explanation:
 
     - The extra complexity associate with the drift equation doesn't immediately feel too substantial to me, it should be testable with a few unit tests. But if it does become too difficult I can always fallback to a simpler increase without the anchors.
 
+## Q-Learning Implementation and Validation
+
+The following give a brief overview of the specifics behind how Q-Learning will be used in offline training.
+The offline training will be used as a validator just to simply confirm that the RL model is learning the correct 
+policy.
+
+![Training Loop](diagrams/training_loop.png)
+
+### Core Q-Learning Algorithm
+
+- State (s)
+    - The discretized heart-disease probability (0–9) as defined in the CSV schema.
+
+- Action (a)
+    - One of the seven config updates (INCREASE_MODERATE_THRESHOLD, …, NOP).
+
+- Reward (r)
+    - +1 if the patient’s updated probability ↓, –1 if ↑, 0 if unchanged.
+
+- Update Rule
+    - After observing (s, a, r, s′), update the Q-table entry:
+    ```
+    Q(s,a) ← Q(s,a) + α [ r + γ · maxₐ′ Q(s′,a′) – Q(s,a) ]
+    α (learning rate): 0.1 (tunable)
+    ```
+    - Where: γ (discount factor): 0.9 (captures importance of future outcomes)
+
+### Training Framework 
+
+1. Episode Definition
+    - A single simulated patient trajectory starting from an initial probability anchor to an end anchor.
+    - Length: 20–50 steps.
+
+2. Simulation Loop
+    - Initialize s₀ from synthetic history.
+    - For t = 0..T:
+    - Choose aₜ via ε-greedy policy (ε decays from 1.0 → 0.1).
+    - Apply aₜ to config, generate next probability pₜ₊₁ (using drift + action_noise).
+    - Discretize pₜ₊₁ → sₜ₊₁.
+    - Compute rₜ by comparing pₜ₊₁ to pₜ.
+    - Q-learning update on (sₜ, aₜ, rₜ, sₜ₊₁).
+
+### Hyperparameter Search
+
+Some minor hyperpermater tuning may be done, but given this projects emphasis on agents, a simple working RL Model should suffic. Some example hyperparemter tuning could include:
+
+1. **Grid-search**: over α ∈ {0.05,0.1,0.2}, γ ∈ {0.8,0.9,0.99}, ε-decay schedules.
+2. **Cumulative-Reward**: Evaluate by average cumulative reward per episode.
+
+### Testing and Validation
+
+In order to test and validate the success of the RL Model:
+
+- 20% of generated patient trajectories will be saved for validation only.
+- Zero no overlap in anchor pairs.
+
+#### Metrics
+
+- Cumulative Reward: higher -> better policy.
+- Policy Stability: variance of chosen actions in same state.
+
+## Testing Strategy
+
+To test the validity and robustness of this health coach system, a multi-stage testing strategy will bes used. The scope of the tests will scale from small tool-level tests, to task-level test, to testing an agent(s) full series of tasks.
+
+### 1. Tool-Level Tests  
+
+- **Scope:** each helper in `/tools` (e.g. `verify_patient_history`, `discretize_probability`)  
+- **Method:** unit-tests(possibly with a framework) with be used with temporary files, mocks for filesystem or YAML, and fixed inputs.
+
+### 2. Task-Level Tests  
+
+- **Scope:** each high-level task function (`fetch_patient_data`, `apply_reward`, `compute_action`, etc.)  
+- **Method:** feed it a canned CSV row or config file and assert the returned state, reward or mutated YAML exactly matches the spec.
+
+### 3. Task-Group Scenario Tests
+
+- **Scope:** clusters of related tasks (e.g. Data Manager pipeline: fetch -> validate -> update)  
+- **Method:** run the sequence end-to-end on a small synthetic patient file and verify the CSV/YAML end state.
+
+### 4. Agent-Level Flow Tests
+
+- **Scope:** each Agent class in `crew.py` (Data Manager Agent, RL Agent, Configuration Agent)  
+- **Method:** instantiate the agent, inject fixed inputs (mock file I/O, Q-table), run its `run()` or task loop, and assert side-effects (updated Q-table, config changes).
+
+### 5. End-to-End RL Loop Tests
+
+- **Scope:** full Q-learning training loop against a small synthetic cohort  
+- **Method:** run N episodes, then verify cumulative reward trends upward and Q-values for key (state,action) pairs converge as expected.
+
+### 6. Crew.ai Integration
+
+- **Scope:** wrapping the above tests inside Crew.ai’s test harness
+- **Method:** define “scenarios” in Crew.ai config that invoke the Agents end-to-end, and assert their outputs via Crew.ai’s assertion APIs.
+
+![Testing](diagrams/testing.png)
+
+## Execution Plan
+
+### 1. **Data Preparation** (1.5 weeks)  
+   - Define and implement data-prep tools (CSV synthesizer, noise injector, anchor pair generator).  
+   - Unit-test each tool with fixed inputs.
+
+### 2. **RL Loop & Model** (2.5 weeks)
+   - Write the core Q-Learning loop.  
+   - Train on synthetic data and validate.
+
+### 3. **Task Development** (1 week)  
+   - Implement each task function (`fetch_patient_data`, `apply_reward`, etc.).  
+   - Write unit and integration tests per task.
+
+### 4. **Agent Assembly** (1 week)
+   - Wire tasks into Data Manager, RL Agent, Configuration Agent.  
+   - Test each agent end-to-end with mocks.
+
+### 5. **End-to-End Testing** (1 week)
+   - Run full pipeline: report -> RL loop -> config updates -> history write.  
+   - Validate metrics and output files.
+
+### 6. **Crew.ai Integration** (1 week)
+   - Package agents and tests into Crew.ai scenarios.  
+   - Run and validate via Crew.ai harness.
+
+![Execution Plan](diagrams/execution_plan.png)
