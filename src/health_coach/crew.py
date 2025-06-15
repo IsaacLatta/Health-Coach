@@ -6,6 +6,50 @@ from health_coach.tools.prediction import predict_heart_disease
 from health_coach.tools.reporting import generate_report, save_report
 from health_coach.tools.explanation import generate_prediction_explanation
 
+# def _get_data_input_tasks(agent: Agent) -> list[Task]:
+#     load_configuration_task = Task(
+#         name="load_configuration",
+#         tool=load_config,
+#         description=(
+#             "Given a filesystem path to the YAML config, load and return the parsed dict "
+#             "with keys 'thresholds' and 'explanation.top_k'. "
+#             "On failure, retry up to 3 times, then return {}."
+#         ),
+#     )
+
+#     fetch_patient_data_task = Task(
+#         name="fetch_patient_data",
+#         tool=load_patient_history,
+#         description=(
+#             "Given a patient_id and CSV directory, load and return the patient's full history "
+#             "as a list of dicts (one per row). On I/O failure, retry 3× then return []."
+#         ),
+#     )
+
+def make_test_pipeline():
+    data_input_agent = Agent(
+        name="data_loader_agent",
+        role=(
+            "Your single responsibility is to correctly load structured data "
+            "from a specified source for downstream agent processing."
+        ),
+        goal=(
+            "Given a data source descriptor and an expected schema, load and return "
+            "the data in exactly the required format. Your responsible for ensuring real data is loaded;"
+            " never invent, omit, or mutate values. Mutating or inventing data can have calamitous effects on" 
+            "downstream processing, after 3 failed attempts to load the data, simply pass on an empty container of the " 
+            "specified format for an upstream handler can gracefully handle it."
+        ),
+        backstory=(
+            "You are a reliable data-engineer agent. You know how to open and parse "
+            "files (CSV, JSON, YAML, etc.), validate that each field matches the schema, "
+            "and handle I/O errors gracefully. If loading fails, retry up to 3 times "
+            "with exponential backoff; if still unsuccessful, return an empty collection."
+        ),
+        verbose=True,
+    )
+    
+
 def make_health_coach():
     prediction_agent = Agent(
         name="prediction_agent",

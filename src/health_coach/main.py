@@ -41,8 +41,10 @@ def replay():
     # except Exception as e:
     #     raise Exception(f"An error occurred while replaying the crew: {e}")
 
+from health_coach.tools.data import test_load_config
+
 def test():
-    print("Not implemented.")
+    test_load_config()
     return
     # inputs = {
     #     "topic": "AI LLMs",
