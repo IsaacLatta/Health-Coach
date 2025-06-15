@@ -17,3 +17,6 @@ uv.lock
 
 !out/.gitkeep
 out/*
+
+resources/data/Heart_Disease_Prediction.csv:Zone.Identifier
+
