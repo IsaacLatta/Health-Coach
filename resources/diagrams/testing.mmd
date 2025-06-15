@@ -1,0 +1,20 @@
+%%{init:{
+  "theme":"dark",
+  "themeVariables":{
+    "primaryColor":"#4B0082",
+    "secondaryColor":"#6A0DAD",
+    "tertiaryColor":"#9370DB",
+    "edgeLabelBackground":"#301934",
+    "fontFamily":"Arial"
+  }
+}}%%
+stateDiagram-v2
+  direction TB
+
+  [*] --> UnitTests : Tool Unit Tests
+  UnitTests --> TaskTests : Task-Level Integration
+  TaskTests --> ScenarioTests : Task-Group Scenarios
+  ScenarioTests --> AgentTests : Agent-Level Flow
+  AgentTests --> E2ETests : End-to-End RL Loop
+  E2ETests --> CrewAITests : Crew.ai Integration
+  CrewAITests --> [*]

@@ -88,11 +88,11 @@ Three agents are hypothesized, where each agent's tasks are correlated.
   Validates and applies config changes.  
   **Tasks**: `load_configuration`, `update_configuration`, `validate_configuration_file`
 
-![Agent Flow](diagrams/agents.png)
-
 ### Integration
 
-The reinforcment centric tasks incorporation can be seen below. In summary, an obvious place for RL is after the original prediction->report pipeline, decoupling the RL from the rest of the system. Thus, leading to a much more modular and resuable component, later the RL system could be refactored into a generic RL pipeline to be used in other applications, where "application specific RL" can be injected, but the process remains constant (e.g load data, compute reward ... update data etc).Only loading the systems current configuration would need to be completed prior to or during the report generation/prediction pipeline.
+The reinforcement centric tasks incorporation can be seen below. In summary, an obvious place for RL is after the original prediction->report pipeline, decoupling the RL from the rest of the system. Thus, leading to a much more modular and reusable component, later the RL system could be refactored into a generic RL pipeline to be used in other applications, where "application specific RL" can be injected, but the process remains constant (e.g load data, compute reward ... update data etc).Only loading the systems current configuration would need to be completed prior to or during the report generation/prediction pipeline.
+
+![Agent Flow](diagrams/agents.png)
 
 ## Reinforcement Learning
 
@@ -143,7 +143,7 @@ explanation:
         - .
         - **9**: [0.9, 1.0)
     - **Reward**: +1/-1/0
-    - **Action**: INCREASE_MODERATE_THRESHOLD, ... DESCREASE_TOP_K, NOP
+    - **Action**: INCREASE_MODERATE_THRESHOLD, ... DECREASE_TOP_K, NOP
 - For example, a patient file would have the following additional columns:
     ```
     Id, Date, Prediction, State, Action, Reward, Eval_Date, Eval_Prediction, Next_State, True_Outcome
@@ -154,11 +154,11 @@ explanation:
 
 - The [dataset](../resources/data/heart_disease_data.csv) will be stretched to account for multiple patients, over varying timeframes.
 - Since it is difficult to stretch the data and not introduce biases, noise, and instability, I suggest the following approach:
-    1. Firstly compute pairs of "Present" and "Absent" entries in the csv. These values will be used as the anchors of the patient's synthetic history, a patient will drift at some rate, for some period of time, landing at the other anchor. This atleast ostensibly provides realistic inflection points of when someone "gets heart disease".
+    1. Firstly compute pairs of "Present" and "Absent" entries in the csv. These values will be used as the anchors of the patient's synthetic history, a patient will drift at some rate, for some period of time, landing at the other anchor. This at least ostensibly provides realistic inflection points of when someone "gets heart disease".
         - **Improving**: Present->Absent
         - **Worsening**: Absent->Present
         - **Stable**: No Change 
-    2. I propose a simple equation for generating this "drift" to avoid the RL algorithm overfitting my beliefs, and to ensure that the RL Agent is indeed learning a policy based on state dependent action outcomes with some semblance of real world stochasticity. For example:
+    2. I propose a simple equation for generating this "drift" to avoid the RL algorithm over fitting my beliefs, and to ensure that the RL Agent is indeed learning a policy based on state dependent action outcomes with some semblance of real world stochasticity. For example:
     ```
     P(t+1) = (1-alpha)*P_start(t) + alpha*P_end(t) + gaussian_noise + action_dependent_noise 
     ```
@@ -218,7 +218,7 @@ policy.
 
 ### Hyperparameter Search
 
-Some minor hyperpermater tuning may be done, but given this projects emphasis on agents, a simple working RL Model should suffic. Some example hyperparemter tuning could include:
+Some minor hyperpermeter tuning may be done, but given this projects emphasis on agents, a simple working RL Model should suffice. Some example hyperparemeter tuning could include:
 
 1. **Grid-search**: over α ∈ {0.05,0.1,0.2}, γ ∈ {0.8,0.9,0.99}, ε-decay schedules.
 2. **Cumulative-Reward**: Evaluate by average cumulative reward per episode.
