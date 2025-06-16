@@ -42,17 +42,22 @@ def replay():
     #     raise Exception(f"An error occurred while replaying the crew: {e}")
 
 from health_coach.tools.data import test_load_config
-from health_coach.tools.data import test_load_patient_history
+# from health_coach.tools.data import test_load_patient_history
+from health_coach.crew import make_test_pipeline
 
 def test():
-    # test_load_config()
-    test_load_patient_history()
+    inputs = {
+    "patient_info": {"patient_id" : "0" },
+    "feature_names" : [ "age","sex","cp","trestbps","chol","fbs", "restecg","thalach","exang","oldpeak","slope","ca","thal" ],
+    "features": [ 63, 1, 1, 145, 233, 1, 2, 150, 0, 2.3, 3, 0, 2 ]
+    }
+    try:
+        make_test_pipeline().kickoff(inputs=inputs)
+    except Exception as e:
+        raise Exception(f"An error occurred while running the crew: {e}")
+     
     return
-    # inputs = {
-    #     "topic": "AI LLMs",
-    #     "current_year": str(datetime.now().year)
-    # }
-    
+   
     # try:
     #     HealthCoach().crew().test(n_iterations=int(sys.argv[1]), eval_llm=sys.argv[2], inputs=inputs)
 
