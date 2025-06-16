@@ -19,5 +19,6 @@ data_input_agent = Agent(
             "and handle I/O errors gracefully. If loading fails, retry up to 3 times "
             "with exponential backoff; if still unsuccessful, return an empty collection."
         ),
+        max_iter=3,
         verbose=True,
     )

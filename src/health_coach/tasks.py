@@ -1,5 +1,5 @@
 from crewai import Task, Agent
-from health_coach.tools.data import load_patient_history, load_config
+from health_coach.tools.data import load_patient_history, load_config, update_patient_history
 
 # src/health_coach/schemas.py
 from pydantic import BaseModel
@@ -11,6 +11,18 @@ class HistoryResponse(BaseModel):
 class ConfigResponse(BaseModel):
     config: Dict[str, Any]
 
+def get_update_patient_history_task(agent: Agent):
+    return Task(
+        agent=agent,
+        name="update_patient_data",
+        tools=[update_patient_history],
+        description=(
+            "Append a new row for the patient’s history"
+            "as valid JSON."
+        ),
+        expected_output="{new_history: dict}",
+        output_json=HistoryResponse,
+    )
 
 def get_fetch_patient_history_task(agent: Agent) -> Task:
     return Task(

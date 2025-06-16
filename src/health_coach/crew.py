@@ -9,14 +9,27 @@ from health_coach.tools.explanation import generate_prediction_explanation
 from health_coach.agents import data_input_agent
 from health_coach.tasks import get_load_configuration_task
 from health_coach.tasks import get_fetch_patient_history_task
+from health_coach.tasks import get_update_patient_history_task
 
-def make_test_pipeline():
+def test_loading_pipeline():
     agent = data_input_agent
     t1 = get_load_configuration_task(agent)
     t2 = get_fetch_patient_history_task(agent)
     return Crew(
         agents=[agent],
         tasks=[t1, t2],
+        process=Process.sequential,
+        verbose=True,
+    )
+
+def test_loading_and_saving_pipeline():
+    agent = data_input_agent
+    t1 = get_load_configuration_task(agent)
+    t2 = get_fetch_patient_history_task(agent)
+    t3 = get_update_patient_history_task(agent)
+    return Crew(
+        agents=[agent],
+        tasks=[t1, t2, t3],
         process=Process.sequential,
         verbose=True,
     )
@@ -69,7 +82,8 @@ def make_health_coach():
         tools_input={
             "generate_prediction_explanation": {
                 "features": "{features}",
-                "feature_names": "{feature_names}"
+                "feature_names": "{feature_names}",
+                "top_k": "{config.explanation.top_k}"
             }
         },
         expected_output='{"html": str}',
@@ -116,8 +130,13 @@ def make_health_coach():
     ) 
 
     return Crew(
-        agents=[prediction_agent, explanation_agent, report_agent],
-        tasks=[prediction_task, explanation_task, report_task, save_task],
+        agents=[prediction_agent, explanation_agent, report_agent ,data_input_agent],
+        tasks=[
+            get_load_configuration_task(data_input_agent), 
+            prediction_task, 
+            explanation_task, 
+            report_task, 
+            save_task],
         process=Process.sequential,
         verbose=True,
     )

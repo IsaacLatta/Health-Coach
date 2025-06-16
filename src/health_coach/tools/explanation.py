@@ -7,7 +7,7 @@ from health_coach.tools.prediction import get_model
 
 
 @tool
-def generate_prediction_explanation(feature_names: List[str], features: List[float], top_n: int = 5) -> str:
+def generate_prediction_explanation(feature_names: List[str], features: List[float], top_k: int = 5) -> str:
     """
     feature_names: names of the input features to the prediction model.
     features: list of floats in the same order as the feature names. 
@@ -31,7 +31,7 @@ def generate_prediction_explanation(feature_names: List[str], features: List[flo
     # pair, sort, and take top_n
     pairs = list(zip(feature_names, shap_vals))
     pairs.sort(key=lambda kv: abs(kv[1]), reverse=True)
-    top = pairs[:top_n]
+    top = pairs[:top_k]
 
     items = "".join(
         f"<li><strong>{name}</strong>: {val:.3f}</li>"
