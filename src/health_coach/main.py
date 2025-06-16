@@ -42,9 +42,11 @@ def replay():
     #     raise Exception(f"An error occurred while replaying the crew: {e}")
 
 from health_coach.tools.data import test_load_config
+from health_coach.tools.data import test_load_patient_history
 
 def test():
-    test_load_config()
+    # test_load_config()
+    test_load_patient_history()
     return
     # inputs = {
     #     "topic": "AI LLMs",
