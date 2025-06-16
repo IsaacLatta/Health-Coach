@@ -1,31 +1,41 @@
-from crewai import Crew, Process, Task, Agent
+from crewai import Task, Agent
+from health_coach.tools.data import load_patient_history, load_config
 
-from health_coach.tools.data import load_config
-from health_coach.tools.data import load_patient_history
+# src/health_coach/schemas.py
+from pydantic import BaseModel
+from typing import Any, Dict
 
-def get_fetch_patient_history_task(agent: Agent):
+class HistoryResponse(BaseModel):
+    history: Dict[str, Any]
+
+class ConfigResponse(BaseModel):
+    config: Dict[str, Any]
+
+
+def get_fetch_patient_history_task(agent: Agent) -> Task:
     return Task(
-            agent=agent,
-            name="fetch_patient_data",
-            tools=[load_patient_history],
-            description=(
-                "Given a patient_id: {patient_info}, load and return the patient's history. "
-                " The expected output of the tool is a dictionary representing the patient's " \
-                " last history entry. If this tool fails, do attempt to retry, "
-                " simply forward along the empty dictionary."
-            ),
-            expected_output="{\"history\": dict}"
-        )
+        agent=agent,
+        name="fetch_patient_data",
+        tools=[load_patient_history],
+        description=(
+            "Given patient info {patient_info}, invoke the `load_patient_history` tool "
+            "and RETURN ONLY a JSON object of the form "
+            "`{ \"history\": <last_row_dict> }`.  No extra prose; keys and strings "
+            "must be valid JSON."
+        ),
+        output_json=HistoryResponse,
+        expected_output="{history: dict}"
+    )
 
-def get_load_configuration_task(agent: Agent):
+def get_load_configuration_task(agent: Agent) -> Task:
     return Task(
         agent=agent,
         name="load_configuration",
         tools=[load_config],
         description=(
-            "Load and return the parsed dictionary, the expected output from load_config" \
-            "should be a dictionary representing the systems configuration."
-            "If this tool fails, do attempt to retry, simply forward along the empty dictionary"
+            "Invoke the `load_config` tool on the YAML path and RETURN ONLY "
+            "`{ \"config\": <parsed_dict> }`.  No surrounding text; must be valid JSON."
         ),
+        output_json=ConfigResponse,
         expected_output="{config: dict}"
     )

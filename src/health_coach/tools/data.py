@@ -180,3 +180,4 @@ def load_patient_history(patient_id: str) -> dict:
                  malformed, empty, or if all attempts fail.
     """
     return _load_patient_data(patient_id, _PATIENT_DATA_DIRECTORY_)
+

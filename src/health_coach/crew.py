@@ -12,10 +12,11 @@ from health_coach.tasks import get_fetch_patient_history_task
 
 def make_test_pipeline():
     agent = data_input_agent
-    task = get_fetch_patient_history_task(agent)
+    t1 = get_load_configuration_task(agent)
+    t2 = get_fetch_patient_history_task(agent)
     return Crew(
         agents=[agent],
-        tasks=[task],
+        tasks=[t1, t2],
         process=Process.sequential,
         verbose=True,
     )
