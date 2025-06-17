@@ -1,15 +1,12 @@
 from crewai import Task, Agent
-from health_coach.tools.data import load_patient_history, load_config, update_patient_history
+from health_coach.tools.data import load_patient_history, load_config, update_patient_history, update_configuration
 
 # src/health_coach/schemas.py
 from pydantic import BaseModel
 from typing import Any, Dict
 
-class HistoryResponse(BaseModel):
-    history: Dict[str, Any]
-
-class ConfigResponse(BaseModel):
-    config: Dict[str, Any]
+class NewHistoryResponse(BaseModel):
+    new_history: Dict[str, Any]
 
 def get_update_patient_history_task(agent: Agent):
     return Task(
@@ -21,8 +18,11 @@ def get_update_patient_history_task(agent: Agent):
             "as valid JSON."
         ),
         expected_output="{new_history: dict}",
-        output_json=HistoryResponse,
+        output_json=NewHistoryResponse,
     )
+
+class HistoryResponse(BaseModel):
+    history: Dict[str, Any]
 
 def get_fetch_patient_history_task(agent: Agent) -> Task:
     return Task(
@@ -39,6 +39,9 @@ def get_fetch_patient_history_task(agent: Agent) -> Task:
         expected_output="{history: dict}"
     )
 
+class ConfigResponse(BaseModel):
+    config: Dict[str, Any]
+
 def get_load_configuration_task(agent: Agent) -> Task:
     return Task(
         agent=agent,
@@ -50,4 +53,26 @@ def get_load_configuration_task(agent: Agent) -> Task:
         ),
         output_json=ConfigResponse,
         expected_output="{config: dict}"
+    )
+
+class NewConfigResponse(BaseModel):
+    new_config: Dict[str, Any]
+
+def get_update_configuration_task(agent: Agent) -> Task:
+    return Task(
+        agent=agent,
+        name="update_configuration",
+        tools=[update_configuration],
+        tools_input={
+            "update_configuration": {
+                "new_config": "{load_configuration.config}"
+            }
+        },
+        description=(
+            "Given a partial config update, validate and write it to the YAML file, "
+            "then **return only**:\n"
+            "`{ \"new_config\": <updated_config_dict> }` as valid JSON."
+        ),
+        expected_output="{new_config: dict}",
+        output_json=NewConfigResponse,
     )

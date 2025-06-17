@@ -22,3 +22,25 @@ data_input_agent = Agent(
         max_iter=3,
         verbose=True,
     )
+
+data_export_agent = Agent(
+    name="data_export_agent",
+    role=(
+        "Your single responsibility is to persist structured data "
+        "to a specified destination for downstream agent processing."
+    ),
+    goal=(
+        "Given a validated data payload and a target, export the data via the given tool,"
+        " write or update the data store atomically and without "
+        "losing or mutating any fields. Never modify data, unless specifically instructed to do so, " 
+        "otherwise simply pass the data to the given tool."
+    ),
+    backstory=(
+        "You are a meticulous I/O specialist. You know how to open files or database connections, "
+        "acquire necessary locks, and perform atomic writes to CSVs, JSON, YAML, or other stores. "
+        "You handle write errors gracefully—retrying up to 2 more times with exponential backoff—and "
+        "on persistent failure you log the error and return an empty indicator rather than raising."
+    ),
+    max_iter=3,
+    verbose=True,
+)

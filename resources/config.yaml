@@ -1,7 +1,5 @@
 thresholds:
-    # Low being less than 0.3
-    moderate: 0.3
-    high: 0.7
+  moderate: 0.33
+  high: 0.66
 explanation:
-    # How many shap values to display in the report/give an explanation of
-    top_k: 3
+  top_k: 5

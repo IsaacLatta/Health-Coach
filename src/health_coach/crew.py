@@ -1,38 +1,17 @@
 from crewai import Agent
-from crewai.project import CrewBase, agent, crew, task
+from crewai.project import CrewBase, agent, crew, task, tool
 from crewai import Crew, Process, Task  
+
+import health_coach.tools.data as data_mod
 
 from health_coach.tools.prediction import predict_heart_disease
 from health_coach.tools.reporting import generate_report, save_report
 from health_coach.tools.explanation import generate_prediction_explanation
 
-from health_coach.agents import data_input_agent
+from health_coach.agents import data_input_agent, data_export_agent
 from health_coach.tasks import get_load_configuration_task
 from health_coach.tasks import get_fetch_patient_history_task
-from health_coach.tasks import get_update_patient_history_task
-
-def test_loading_pipeline():
-    agent = data_input_agent
-    t1 = get_load_configuration_task(agent)
-    t2 = get_fetch_patient_history_task(agent)
-    return Crew(
-        agents=[agent],
-        tasks=[t1, t2],
-        process=Process.sequential,
-        verbose=True,
-    )
-
-def test_loading_and_saving_pipeline():
-    agent = data_input_agent
-    t1 = get_load_configuration_task(agent)
-    t2 = get_fetch_patient_history_task(agent)
-    t3 = get_update_patient_history_task(agent)
-    return Crew(
-        agents=[agent],
-        tasks=[t1, t2, t3],
-        process=Process.sequential,
-        verbose=True,
-    )
+from health_coach.tasks import get_update_configuration_task
 
 def make_health_coach():
     prediction_agent = Agent(
