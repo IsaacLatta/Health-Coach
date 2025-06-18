@@ -16,14 +16,6 @@ FEATURE_NAMES = [
     "Slope of ST","Number of vessels fluro","Thallium"
 ]
 
-def load_model(model_path: Path = _MODEL_PATH) -> Any:
-    with open(model_path, "rb") as f:
-        return pickle.load(f)
-
-def predict_proba(model: Any, row: Dict[str, Any]) -> float:
-    features = [float(row[col]) for col in FEATURE_NAMES]
-    return float(model.predict_proba([features])[0][1])
-
 def extract_anchor_pairs(csv_path: Path = _DATA_SET_PATH) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
     df = pd.read_csv(csv_path)
     records = df.to_dict(orient="records")
@@ -41,6 +33,14 @@ def split_anchors(
     random.shuffle(shuffled)
     n_rand = max(1, int(len(shuffled) * random_frac))
     return shuffled[:n_rand], shuffled[n_rand:]
+
+def load_model(model_path: Path = _MODEL_PATH) -> Any:
+    with open(model_path, "rb") as f:
+        return pickle.load(f)
+
+def predict_proba(model: Any, row: Dict[str, Any]) -> float:
+    features = [float(row[col]) for col in FEATURE_NAMES]
+    return float(model.predict_proba([features])[0][1])
 
 def classify_trend(
     trend_anchors: List[Tuple[Dict[str, Any], Dict[str, Any]]],
@@ -93,24 +93,3 @@ def write_episodes(
         dest = train_dir if idx < cut else val_dir
         dest.joinpath(f"episode_{idx:03d}.csv").write_text(df.to_csv(index=False))
 
-def main():
-    model = load_model()
-    anchors = extract_anchor_pairs()
-    rand_anchors, trend_anchors = split_anchors(anchors)
-
-    down, up = classify_trend(trend_anchors, model)
-    print(f"Trend: {len(trend_anchors)} episodes (down={down}, up={up})")
-    print(f"Random-walk: {len(rand_anchors)} episodes")
-
-    train_dir, val_dir = prepare_output_dirs()
-
-    episodes = []
-    episodes += generate_episodes(trend_anchors, model, mode="trend")
-    episodes += generate_episodes(rand_anchors, model, mode="random_walk")
-
-    print(f"Total episodes: {len(episodes)}")
-    write_episodes(episodes, train_dir, val_dir)
-    print("Generation complete.")
-
-if __name__ == "__main__":
-    main()
