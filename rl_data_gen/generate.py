@@ -1,13 +1,14 @@
 import pandas as pd
-from pathlib import Path
 import pickle
 import random
-from typing import List, Tuple, Dict, Any
+from pathlib import Path
+from typing import Any, List, Tuple, Dict
 
 from rl_data_gen.drift import simulate_drift
 
-_DATA_SET_PATH_ = Path(__file__).resolve().parents[1]/"resources"/"data"/"Heart_Disease_Prediction.csv"
-_MODEL_PATH_  = Path(__file__).resolve().parents[1]/"models"/"cv_pred_log_reg.pkl"
+BASE_DIR = Path(__file__).resolve().parents[1]
+_DATA_SET_PATH = BASE_DIR/"data"/"Heart_Disease_Prediction.csv"
+_MODEL_PATH = BASE_DIR/"models"/"cv_pred_log_reg.pkl"
 
 FEATURE_NAMES = [
     "Age","Sex","Chest pain type","BP","Cholesterol","FBS over 120",
@@ -15,71 +16,101 @@ FEATURE_NAMES = [
     "Slope of ST","Number of vessels fluro","Thallium"
 ]
 
-def get_model():
-    with open(_MODEL_PATH_, "rb") as f:
+def load_model(model_path: Path = _MODEL_PATH) -> Any:
+    with open(model_path, "rb") as f:
         return pickle.load(f)
 
-def make_prediction(model, features: List[Any]) -> float:
+def predict_proba(model: Any, row: Dict[str, Any]) -> float:
+    features = [float(row[col]) for col in FEATURE_NAMES]
     return float(model.predict_proba([features])[0][1])
 
-def extract_anchor_pairs(csv_path: Path) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+def extract_anchor_pairs(csv_path: Path = _DATA_SET_PATH) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
     df = pd.read_csv(csv_path)
     records = df.to_dict(orient="records")
+    count = len(records)
+    even = count if count % 2 == 0 else count - 1
+    return [(records[i], records[i+1]) for i in range(0, even, 2)]
 
-    n = len(records)
-    even_count = n if (n % 2 == 0) else (n - 1)
-    if even_count < 2:
-        return []
+def split_anchors(
+    anchors: List[Tuple[Dict[str, Any], Dict[str, Any]]],
+    random_frac: float = 0.1,
+    seed: int = 42
+) -> Tuple[List, List]:
+    random.seed(seed)
+    shuffled = anchors.copy()
+    random.shuffle(shuffled)
+    n_rand = max(1, int(len(shuffled) * random_frac))
+    return shuffled[:n_rand], shuffled[n_rand:]
 
-    pairs: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
-    for i in range(0, even_count, 2):
-        pairs.append((records[i], records[i+1]))
-    return pairs
+def classify_trend(
+    trend_anchors: List[Tuple[Dict[str, Any], Dict[str, Any]]],
+    model: Any
+) -> Tuple[int, int]:
+    down = up = 0
+    for r0, r1 in trend_anchors:
+        p0 = predict_proba(model, r0)
+        p1 = predict_proba(model, r1)
+        if p1 < p0:
+            down += 1
+        else:
+            up += 1
+    return down, up
+
+def prepare_output_dirs(base: Path = BASE_DIR/"data"/"synthetic") -> Tuple[Path, Path]:
+    train = base / "train"
+    val   = base / "val"
+    train.mkdir(parents=True, exist_ok=True)
+    val.mkdir(parents=True, exist_ok=True)
+    return train, val
+
+def generate_episodes(
+    anchors: List[Tuple[Dict[str, Any], Dict[str, Any]]],
+    model: Any,
+    mode: str,
+    start_seed: int = 1000
+) -> List[List[Dict[str, Any]]]:
+    eps = []
+    seed = start_seed
+    for r0, r1 in anchors:
+        p0 = predict_proba(model, r0)
+        p1 = predict_proba(model, r1)
+        traj = simulate_drift(p0, p1, seed=seed, mode=mode)
+        eps.append(traj)
+        seed += 1
+    return eps
+
+def write_episodes(
+    episodes: List[List[Dict[str, Any]]],
+    train_dir: Path,
+    val_dir: Path,
+    train_frac: float = 0.8
+):
+    random.shuffle(episodes)
+    total = len(episodes)
+    cut   = int(total * train_frac)
+    for idx, traj in enumerate(episodes):
+        df = pd.DataFrame(traj)
+        dest = train_dir if idx < cut else val_dir
+        dest.joinpath(f"episode_{idx:03d}.csv").write_text(df.to_csv(index=False))
 
 def main():
-    print(f"Extract anchor pairs from dataset: '{_DATA_SET_PATH_}'...")
-    anchors = extract_anchor_pairs(_DATA_SET_PATH_)
-    print(f"Found {len(anchors)} anchor pairs. Simulating drifts...\n")
-    if not anchors:
-        print("No anchors found, exiting.")
-        return
+    model = load_model()
+    anchors = extract_anchor_pairs()
+    rand_anchors, trend_anchors = split_anchors(anchors)
 
-    model = get_model()
+    down, up = classify_trend(trend_anchors, model)
+    print(f"Trend: {len(trend_anchors)} episodes (down={down}, up={up})")
+    print(f"Random-walk: {len(rand_anchors)} episodes")
 
-    random.seed(42)
-    random.shuffle(anchors)
-    split_index = int(len(anchors) * 0.1)
-    random_walk_anchors = anchors[:split_index]
-    trend_anchors = anchors[split_index:]
+    train_dir, val_dir = prepare_output_dirs()
 
-    print(f"Generating {len(trend_anchors)} trend trajectories and {len(random_walk_anchors)} random walk trajectories.\n")
+    episodes = []
+    episodes += generate_episodes(trend_anchors, model, mode="trend")
+    episodes += generate_episodes(rand_anchors, model, mode="random_walk")
 
-    row0, row1 = trend_anchors[0]
-    feat0 = [float(row0[col]) for col in FEATURE_NAMES]
-    feat1 = [float(row1[col]) for col in FEATURE_NAMES]
-    p_start = make_prediction(model, feat0)
-    p_end = make_prediction(model, feat1)
-
-    print(f"Anchor 0 features -> p_start={p_start:.4f}")
-    print(f"Anchor 1 features -> p_end  ={p_end:.4f}\n")
-
-    trajectory = simulate_drift(p_start, p_end, seed=42, mode="trend")
-    print("First 10 steps of synthetic trend trajectory:")
-    for t, step in enumerate(trajectory[:10]):
-        print(f"Step {t:2d}: ", step)
-    print(f"\nGenerated trajectory length: {len(trajectory)}")
-
-    row0, row1 = random_walk_anchors[0]
-    feat0 = [float(row0[col]) for col in FEATURE_NAMES]
-    feat1 = [float(row1[col]) for col in FEATURE_NAMES]
-    p_mid0 = make_prediction(model, feat0)
-    p_mid1 = make_prediction(model, feat1)
-    p_base = (p_mid0 + p_mid1) / 2.0
-
-    neutral_trajectory = simulate_drift(p_mid0, p_mid1, seed=99, mode="trend")
-    print("\nFirst 10 steps of synthetic random walk trajectory:")
-    for t, step in enumerate(neutral_trajectory[:10]):
-        print(f"Step {t:2d}: ", step)
+    print(f"Total episodes: {len(episodes)}")
+    write_episodes(episodes, train_dir, val_dir)
+    print("Generation complete.")
 
 if __name__ == "__main__":
     main()
