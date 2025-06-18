@@ -11,12 +11,10 @@ from health_coach.tasks import (
     get_update_configuration_task,
 )
 
-# point to your real resources
 BASE = Path(__file__).resolve().parents[4] / "resources"
 CONFIG_PATH = BASE / "config.yaml"
 PATIENT_DIR = BASE / "patient_data"
 
-# load the "ground truth" from disk
 EXPECTED_CONFIG = yaml.safe_load(CONFIG_PATH.read_text())
 EXPECTED_HISTORY_0 = {
     "Age": 72, "Sex": 0, "Chest pain type": 4, "BP": 130,
