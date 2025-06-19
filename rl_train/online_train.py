@@ -1,22 +1,20 @@
+import csv
 import numpy as np
-import pandas as pd
-from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 def q_learning(
-    env,
-    num_episodes,
+    env: Any,
+    num_episodes: int,
     alpha: float,
     gamma: float,
     epsilon: float,
     eps_decay: float
 ) -> np.ndarray:
-    
     # initialize Q-table
     Q = np.zeros((env.observation_space.n, env.action_space.n), dtype=float)
 
     for ep in range(num_episodes):
-        state, _ = env.reset(seed=ep)
+        state, _ = env.reset()
         done = False
 
         while not done:

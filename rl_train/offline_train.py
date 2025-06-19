@@ -3,13 +3,11 @@ import pandas as pd
 from pathlib import Path
 from typing import List, Dict, Any
 
-# RL hyperparameters defaults
 DEFAULT_ALPHA = 0.1
 DEFAULT_GAMMA = 0.9
 DEFAULT_EPSILON = 1.0
 DEFAULT_EPS_DECAY = 0.999
 
-# Action space for our environment
 ACTIONS = [
     "INCREASE_MODERATE_THRESHOLD",
     "DECREASE_MODERATE_THRESHOLD",
@@ -78,9 +76,9 @@ def offline_train(
     print(f"Average cumulative reward (TRAIN): {r_train:.3f}")
     print(f"Average cumulative reward (VAL):   {r_val:.3f}")
 
-    # out_path = Path(val_dir).parent / "models/"/"q_table.npy"
-    # np.save(out_path, Q)
-    # print(f"Saved Q-table to {out_path}")
+    out_path = Path(__file__).resolve().parents[1] / "models/"/"q_table.npy"
+    np.save(out_path, Q)
+    print(f"Saved Q-table to {out_path}")
 
 if __name__ == "__main__":
     offline_train()
