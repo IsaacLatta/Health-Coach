@@ -6,10 +6,10 @@
 
 The reinforcement agent component will need to complete various tasks on each patient, these include:
 
-- **Load configuration** (`load_configuration`)
+- **Load configuration (COMPLETED)** (`load_configuration`)
     Load the current configuration for the system's recommendations and shap values.
 
-- **Fetch patient history** (`fetch_patient_data`)  
+- **Fetch patient history (COMPLETED)** (`fetch_patient_data`)  
     Retrieve the patient’s most recent CSV record so we can compare their previous state and action.
 
 - **Validate fetched data** (`validate_patient_data`)  
@@ -27,13 +27,13 @@ The reinforcement agent component will need to complete various tasks on each pa
 - **Validate proposed action** (`validate_action`)  
     Check that the chosen action exists and won’t push any threshold or `top_k` out of bounds.
 
-- **Apply configuration update** (`update_configuration`)  
+- **Apply configuration update (COMPLETED)** (`update_configuration`)  
     Mutate the YAML config file according to the chosen action and clamp to valid bounds.
 
 - **Validate configuration file** (`validate_configuration_file`)  
     Confirm the YAML still contains the expected sections/keys after mutation.
 
-- **Update patient record** (`update_patient_data`)  
+- **Update patient record (COMPLETED)** (`update_patient_data`)  
     Back-fill the last row with reward and next state, then append a fresh row with blank eval fields.
 
 ### Tools
@@ -43,31 +43,31 @@ The necessary tools needed to complete the above tasks are proposed below. Each 
 - **verify_patient_history**
     Check whether a history file already exists for this patient, if not create it and enter the first row
 
-- **read_patient_history**  
+- **read_patient_history (COMPLETED)**
     Read the last CSV row for a given patient `id` file; error if file missing or malformed.
 
 - **validate_patient_data**  
     Verify the fetched row includes `probability`, `state`, and `action` fields with correct types.
 
-- **discretize_probability**  
+- **discretize_probability (COMPLETE)**  
     Map a float from [0,1] into an integer state 0–9.
 
-- **calculate_reward**  
+- **calculate_reward (COMPLETED)**  
     Return +1/0/–1 by comparing `prev_state` to `current_state`.
 
-- **select_policy_action**  
+- **select_policy_action (COMPLETED)**  
     Load Q-table, perform greedy action selection on `current_state`.
 
 - **validate_action**  
     Ensure `new_action` is in the allowed set and won’t drive any config value out of valid range.
 
-- **apply_action_to_config**  
+- **apply_action_to_config (COMPLETED)**  
     Load & mutate the YAML (thresholds/top_k), clamp values, and save.
 
-- **validate_config_file**  
+- **validate_config_file (COMPLETED)**  
     Reload YAML and check it still contains `thresholds`, `explanation.top_k`, etc.
 
-- **update_patient_history**  
+- **update_patient_history (COMPLETED)**  
     Open CSV, back-fill the previous row’s blank columns, then append a new row with blank _next_ columns, populated _current_ columns.
 
 ![Task Flow](diagrams/rl_tasks.png)
@@ -107,7 +107,9 @@ thresholds:
     moderate: 0.3
     high: 0.7
 explanation:
-    # How many shap values to display in the report/give an explanation of
+    # How many shap values to 
+    # display in the report/give 
+    # an explanation of
     top_k: 3
 ```
 ## Actions

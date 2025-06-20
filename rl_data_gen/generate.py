@@ -16,12 +16,32 @@ FEATURE_NAMES = [
     "Slope of ST","Number of vessels fluro","Thallium"
 ]
 
-def extract_anchor_pairs(csv_path: Path = _DATA_SET_PATH) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+def extract_anchor_pairs(
+    csv_path: Path = _DATA_SET_PATH,
+    label_column: str = "Heart Disease"
+) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
     df = pd.read_csv(csv_path)
+
+    df[label_column] = df[label_column].map({
+        "Absence": 0,
+        "Presence": 1
+    })
+
     records = df.to_dict(orient="records")
-    count = len(records)
-    even = count if count % 2 == 0 else count - 1
-    return [(records[i], records[i+1]) for i in range(0, even, 2)]
+    negs = [r for r in records if r[label_column] == 0]
+    poss = [r for r in records if r[label_column] == 1]
+
+    random.shuffle(negs)
+    random.shuffle(poss)
+
+    pairs: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
+
+    for n, p in zip(negs, poss):
+        pairs.append((n, p))
+    for p, n in zip(poss, negs):
+        pairs.append((p, n))
+
+    return pairs
 
 def split_anchors(
     anchors: List[Tuple[Dict[str, Any], Dict[str, Any]]],
