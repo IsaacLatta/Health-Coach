@@ -42,10 +42,10 @@ def replay():
     # except Exception as e:
     #     raise Exception(f"An error occurred while replaying the crew: {e}")
 
-import health_coach.tests.integration.data as intgr_data
+import health_coach.tests.unit.actions as action_tests
 
 def test():
-    intgr_data.test_loading_and_saving_pipeline()
+    action_tests.test_all()
 
 if __name__ == "__main__":
     run()

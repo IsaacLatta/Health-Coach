@@ -76,17 +76,13 @@ The necessary tools needed to complete the above tasks are proposed below. Each 
 
 Three agents are hypothesized, where each agent's tasks are correlated.
 
-- **Data Manager Agent**  
-  Handles all CSV I/O and validation.  
-  **Tasks**: `fetch_patient_data`, `validate_patient_data`, `update_patient_data`
+- **Data Input Agent**
 
-- **RL Agent**  
-  Computes state, reward, and next action.  
-  **Tasks**: `compute_current_state`, `apply_reward`, `compute_action`, `validate_action`
+- **Data Export Agent**
 
-- **Configuration Agent**  
-  Validates and applies config changes.  
-  **Tasks**: `load_configuration`, `update_configuration`, `validate_configuration_file`
+- **Policy Agent**
+
+- **Reward Shaping Agent**
 
 ### Integration
 
