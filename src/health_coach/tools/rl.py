@@ -38,30 +38,40 @@ def select_action(state: int, epsilon: float) -> int:
     return _select_action(q_table, state, epsilon)
 
 # Q[s,a] += alpha * (r + gamma * max_a' Q[s',a'] - Q[s,a])
-def _update_q(q_table: np.ndarray,
+def _update_q_table(q_table: np.ndarray,
               state: int,
               action: int,
               reward: float,
               next_state: int,
               alpha: float,
               gamma: float) -> np.ndarray:
+    
     best_next = q_table[next_state].max()
     td_target = reward + gamma * best_next
     td_error = td_target - q_table[state, action]
     q_table[state, action] += alpha * td_error
     return q_table
 
+def _save_np_array(arr: np.ndarray, path: str = _MODEL_PATH) -> bool:
+    try:
+        with open(path, "wb") as f:
+            pickle.dump(updated_q, f)
+            return True
+    except:
+        return False
+
 @tool
-def update_rl_model(state: int, action: int, reward: float, next_state: int) -> list:
+def update_rl_model(state: int, action: int, reward: float, next_state: int) -> bool:
     """
-    Load the Q-table, perform a single update, and return as nested lists.
+    Load the Q-table, perform a single update, and resave the model to disk.
+    Returns true on success, false on failure
     """
     alpha = 0.1
     gamma = 0.99
     q_table = _load_model()
-    updated = _update_q(q_table, state, action, reward, next_state, alpha, gamma)
-    return updated.tolist()
-
+    updated_q_table = _update_q_table(q_table, state, action, reward, next_state, alpha, gamma)
+    return _save_np_array(updated_q_table)
+    
 def _compute_reward(prev_state: int, current_state: int) -> float:
     return (prev_state - current_state)*1.0
 
@@ -91,4 +101,4 @@ def apply_action(old_config: dict, action_idx: int) -> dict:
     """
     Given a config dict and an action index, applies the action and returns the updated config.
     """
-    return _generate_new_config(old_config, action_idx)
+    return _generate_new_config(old_config, action_idx)_MODEL_PATH
