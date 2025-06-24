@@ -8,7 +8,8 @@ dependencies = [
     "crewai[tools]>=0.121.1,<1.0.0",
     "scikit-learn>=1.7.0,<2.0.0",
     "shap>=0.47.2",
-    "gym>=0.26.0,<1.0.0"
+    "gym>=0.26.0,<1.0.0",
+    "pytest>=8.4.1"
 ]
 
 [project.scripts]

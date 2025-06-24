@@ -14,11 +14,11 @@ def assert_equal(actual, expected, name):
     """Compare actual to expected with 2-decimal tolerance for floats."""
     if isinstance(actual, float) and isinstance(expected, float):
         if not math.isclose(actual, expected, abs_tol=1e-2):
-            print(f"FAIL: {name} → expected {expected:.2g}, got {actual:.2g}")
+            print(f"FAIL: {name} -> expected {expected:.2g}, got {actual:.2g}")
             raise AssertionError(name)
     else:
         if actual != expected:
-            print(f"FAIL: {name} → expected {expected!r}, got {actual!r}")
+            print(f"FAIL: {name} -> expected {expected!r}, got {actual!r}")
             raise AssertionError(name)
 
 def test_shape_reward():

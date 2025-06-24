@@ -42,8 +42,7 @@ def replay():
     # except Exception as e:
     #     raise Exception(f"An error occurred while replaying the crew: {e}")
 
-import health_coach.tests.unit.actions as action_tests
-import health_coach.tests.unit.rl as rl_tests
+import health_coach.tests.integration.rl as rl_tests
 
 def test():
     rl_tests.test_all()

@@ -1,7 +1,8 @@
 from crewai import Task, Agent
 from health_coach.tools.data import load_patient_history, load_config, update_patient_history, update_configuration
 
-# src/health_coach/schemas.py
+from health_coach.tools.rl import select_action, compute_reward, update_rl_model, discretize_probability
+
 from pydantic import BaseModel
 from typing import Any, Dict
 
@@ -76,3 +77,93 @@ def get_update_configuration_task(agent: Agent) -> Task:
         expected_output="{new_config: dict}",
         output_json=NewConfigResponse,
     )
+
+class StateResponse(BaseModel):
+    state: int
+
+def get_compute_current_state_task(agent: Agent) -> Task:
+    return Task(
+        agent=agent,
+        name="compute_current_state",
+        tools=[discretize_probability],
+        description=(
+            "Given a raw probability {prediction}, invoke discretize_probability and "
+            "RETURN ONLY JSON {\"state\": <int>}."
+        ),
+        tools_input={
+            "discretize_probability": {
+                "state" : "{prediction}"
+            }
+        },
+        output_json=StateResponse,
+        expected_output="{state: int}",
+    )
+
+class ActionResponse(BaseModel):
+    action: int
+
+def get_compute_action_task(agent: Agent) -> Task:
+    return Task(
+        agent=agent,
+        name="compute_action",
+        tools=[select_action],
+        tools_input={
+            "select_action": {
+                "state": "{compute_current_state.state}",
+                "epsilon": "{epsilon}"
+            }
+        },
+        description=(
+            "Given the discrete state from compute_current_state and exploration rate {epsilon}, "
+            "invoke select_action and RETURN ONLY JSON {\"action\": <int>}."
+        ),
+        output_json=ActionResponse,
+        expected_output="{action: int}",
+    )
+
+class RewardResponse(BaseModel):
+    reward: float
+
+def get_compute_reward_task(agent: Agent) -> Task:
+    return Task(
+        agent=agent,
+        name="apply_reward",
+        tools=[compute_reward],
+        tools_input={
+            "compute_reward": {
+                "prev_state": "{fetch_patient_data.history.State}",
+                "current_state": "{compute_current_state.state}"
+            }
+        },
+        description=(
+            "Given previous state from history and current state, invoke compute_reward "
+            "and RETURN ONLY JSON {\"reward\": <float>}."
+        ),
+        output_json=RewardResponse,
+        expected_output="{reward: float}",
+    )
+
+class UpdateRLResponse(BaseModel):
+    success: bool
+
+def get_update_rl_model_task(agent: Agent) -> Task:
+    return Task(
+        agent=agent,
+        name="update_rl_model",
+        tools=[update_rl_model],
+        tools_input={
+            "update_rl_model": {
+                "state": "{compute_current_state.state}",
+                "action": "{compute_action.action}",
+                "reward": "{apply_reward.reward}",
+                "next_state": "{compute_current_state.state}"
+            }
+        },
+        description=(
+            "Using state, action, reward, and next_state, invoke update_rl_model "
+            "and RETURN ONLY JSON {\"success\": <bool>}."
+        ),
+        output_json=UpdateRLResponse,
+        expected_output="{success: bool}",
+    )
+

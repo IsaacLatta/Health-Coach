@@ -3,17 +3,17 @@
 import numpy as np
 import random
 import pickle
+import math
 from pathlib import Path
 from crewai.tools import tool
 from health_coach.tools.actions import ACTION_HANDLERS, ACTIONS
 
-_BASE_DIR = Path(__file__).resolve().parents[1]
-_MODEL_PATH = _BASE_DIR / "models" / "cv_pred_log_reg.pkl"
+_BASE_DIR = Path(__file__).resolve().parents[3]
+_MODEL_PATH = _BASE_DIR / "models" / "q_table.npy"
 
 def _load_model(model_path: Path = None) -> np.ndarray:
     path = model_path or _MODEL_PATH
-    with open(path, "rb") as f:
-        return pickle.load(f)
+    return np.load(path, allow_pickle=False)
 
 def _shape_reward(reward: float, factor: float) -> float:
     return reward * factor
@@ -25,7 +25,7 @@ def amplify_reward(reward: float, factor: float) -> float:
     """
     return _shape_reward(reward, factor)
 
-def _select_action(q_table: np.ndarray, state: int, epsilon: float) -> int:
+def _select_action(q_table: np.ndarray, state: int, epsilon: float = 0.1) -> int:
     n_actions = q_table.shape[1]
     if random.random() < epsilon:
         return random.randrange(n_actions)
@@ -54,13 +54,13 @@ def _update_q_table(
     q_table[state, action] += alpha * td_error
     return q_table
 
-def _save_np_array(arr: np.ndarray, path: Path = None) -> bool:
+def _save_np_array(q_table: np.ndarray, path: Path = None) -> bool:
     target = path or _MODEL_PATH
     try:
-        with open(target, "wb") as f:
-            pickle.dump(arr, f)
+        # this will write a .npy file
+        np.save(target, q_table)
         return True
-    except:
+    except Exception:
         return False
 
 def _update_rl_model(
@@ -110,3 +110,10 @@ def apply_action(old_config: dict, action_idx: int) -> dict:
     If the index is invalid or the handler isn’t callable, returns the original.
     """
     return _apply_action(old_config, action_idx)
+
+@tool
+def discretize_probability(prediction: float) -> int:
+    """
+    Given a continuous prediction value, returns the discretized state 
+    """
+    return min(max(int(prediction * 10), 0), 9)
