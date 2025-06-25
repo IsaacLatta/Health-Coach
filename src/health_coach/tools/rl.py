@@ -25,7 +25,7 @@ def amplify_reward(reward: float, factor: float) -> float:
     """
     return _shape_reward(reward, factor)
 
-def _select_action(q_table: np.ndarray, state: int, epsilon: float = 0.1) -> int:
+def _select_action(state: int, epsilon: float = 0.1, q_table: np.ndarray = _load_model()) -> int:
     n_actions = q_table.shape[1]
     if random.random() < epsilon:
         return random.randrange(n_actions)
@@ -36,8 +36,7 @@ def select_action(state: int, epsilon: float) -> int:
     """
     Loads the RL model internally and selects an action index for the given state.
     """
-    q_table = _load_model()
-    return _select_action(q_table, state, epsilon)
+    return _select_action(state, epsilon)
 
 def _update_q_table(
     q_table: np.ndarray,
@@ -68,21 +67,21 @@ def _update_rl_model(
     action: int,
     reward: float,
     next_state: int,
-    alpha: float,
-    gamma: float
+    alpha: float = 0.1,
+    gamma: float = 0.99
 ) -> bool:
     q_table = _load_model()
     updated_q = _update_q_table(q_table, state, action, reward, next_state, alpha, gamma)
     return _save_np_array(updated_q)
 
 @tool
-def update_rl_model(state: int, action: int, reward: float, next_state: int) -> bool:
+def update_rl_model(prev_state: int, action: int, reward: float, current_state: int) -> bool:
     """
     Loads the respective model, performs a single update,
     and resave the model to disk.
     Returns True on success, False on failure.
     """
-    return _update_rl_model(state, action, reward, next_state, 0.1, 0.99)
+    return _update_rl_model(prev_state, action, reward, current_state)
 
 def _compute_reward(prev_state: int, current_state: int) -> float:
     return float(prev_state - current_state)

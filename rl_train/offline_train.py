@@ -60,8 +60,8 @@ def evaluate_policy(
     return total_reward / len(episodes) if episodes else 0.0
 
 def offline_train(
-    train_dir: str = "../data/synthetic/train",
-    val_dir:   str = "../data/synthetic/val",
+    train_dir: str = "./data/synthetic/train",
+    val_dir:   str = "./data/synthetic/val",
     alpha:     float = DEFAULT_ALPHA,
     gamma:     float = DEFAULT_GAMMA
 ):

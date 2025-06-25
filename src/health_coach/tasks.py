@@ -1,7 +1,7 @@
 from crewai import Task, Agent
 from health_coach.tools.data import load_patient_history, load_config, update_patient_history, update_configuration
 
-from health_coach.tools.rl import select_action, compute_reward, update_rl_model, discretize_probability
+from health_coach.tools.rl import select_action, compute_reward, update_rl_model, discretize_probability, amplify_reward
 
 from pydantic import BaseModel
 from typing import Any, Dict
@@ -127,20 +127,41 @@ class RewardResponse(BaseModel):
 def get_compute_reward_task(agent: Agent) -> Task:
     return Task(
         agent=agent,
-        name="apply_reward",
+        name="compute_reward",
         tools=[compute_reward],
         tools_input={
             "compute_reward": {
-                "prev_state": "{fetch_patient_data.history.State}",
+                "prev_state": "{fetch_patient_data.history.state}",
                 "current_state": "{compute_current_state.state}"
             }
         },
         description=(
-            "Given previous state from history and current state, invoke compute_reward "
+            "Given previous state {fetch_patient_data.history.State} from history and current state {compute_current_state.state}, invoke compute_reward "
             "and RETURN ONLY JSON {\"reward\": <float>}."
         ),
         output_json=RewardResponse,
         expected_output="{reward: float}",
+    )
+
+class ShapedRewardResponse(BaseModel):
+    shaped_reward: float
+
+def get_shape_reward_task(agent: Agent, ctx: list[Task]) -> Task:
+    return Task(
+        agent=agent,
+        name="shape_reward",
+        tools=[amplify_reward],
+        tools_input={
+            "amplify_reward" : {
+                "reward" : "{compute_reward.reward}",
+                "factor" : "A factor of your choosing."
+            }
+        },
+        description=("Given the patient's features found in their history, "
+        "their previous MDP values, you have the opportunity to augment this reward using the provided tools."),
+        output_json=ShapedRewardResponse,
+        expected_output="{shaped_reward: float}",
+        context=ctx
     )
 
 class UpdateRLResponse(BaseModel):
@@ -153,14 +174,15 @@ def get_update_rl_model_task(agent: Agent) -> Task:
         tools=[update_rl_model],
         tools_input={
             "update_rl_model": {
-                "state": "{compute_current_state.state}",
+                "state": "{fetch_patient_history.history.state}",
                 "action": "{compute_action.action}",
-                "reward": "{apply_reward.reward}",
+                "reward": "{compute_reward.reward}",
                 "next_state": "{compute_current_state.state}"
             }
         },
         description=(
-            "Using state, action, reward, and next_state, invoke update_rl_model "
+            "Using state[{fetch_patient_history.history.state}], action[{compute_action.action}], reward[{compute_reward.reward}], "
+            "and next_state[{compute_current_state.state}], invoke update_rl_model "
             "and RETURN ONLY JSON {\"success\": <bool>}."
         ),
         output_json=UpdateRLResponse,

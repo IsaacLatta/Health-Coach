@@ -30,7 +30,7 @@ def load_config() -> dict:
     """
     return _load_config(_CONFIG_PATH_)
 
-def _load_patient_data(patient_id: str, patient_folder: str, timeout_base: int = 1) -> dict:
+def _load_patient_data(patient_id: str, patient_folder: str =  _PATIENT_DATA_DIRECTORY_, timeout_base: int = 1) -> dict:
     csv_path = os.path.join(patient_folder, f"{patient_id}.csv")
     for attempt in range(3):
         try:
@@ -52,7 +52,7 @@ def load_patient_history(patient_id: str) -> dict:
                  Retries up to 3 times on I/O errors; returns {} if the file is missing,
                  malformed, empty, or if all attempts fail.
     """
-    return _load_patient_data(patient_id, _PATIENT_DATA_DIRECTORY_)
+    return _load_patient_data(patient_id)
 
 def _update_patient_history(
     patient_id: str,
