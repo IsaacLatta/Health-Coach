@@ -3,7 +3,7 @@ import sys
 import warnings
 import json
 
-from health_coach.crew import make_health_coach
+# from health_coach.crew import make_health_coach
 
 from datetime import datetime
 
@@ -16,7 +16,8 @@ def run():
     }
 
     try:
-        make_health_coach().kickoff(inputs=inputs)
+        # make_health_coach().kickoff(inputs=inputs)
+        pass
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
 
