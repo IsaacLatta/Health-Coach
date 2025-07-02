@@ -22,7 +22,7 @@ def assert_equal(actual, expected, name):
             raise AssertionError(name)
 
 def test_shape_reward():
-    r = rl_mod._shape_reward(3.0, 1.5)
+    r = rl_mod._amplify_reward(3.0, 1.5)
     assert_equal(r, 4.5, "_shape_reward")
     print("test_shape_reward: PASS")
 

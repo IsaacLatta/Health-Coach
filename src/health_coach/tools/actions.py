@@ -1,3 +1,5 @@
+from typing import Union
+
 def increase_moderate_threshold(old_config: dict, step: float = 0.05) -> dict:
     """
     Increase the 'moderate' threshold in the configuration.
@@ -110,7 +112,6 @@ def nop(old_config: dict) -> dict:
     """
     return old_config
 
-
 ACTIONS = [
     "INCREASE_MODERATE_THRESHOLD",
     "DECREASE_MODERATE_THRESHOLD",
@@ -130,3 +131,11 @@ ACTION_HANDLERS: dict = {
     ACTIONS[5]: decrease_top_k,
     ACTIONS[6]: nop,
 }
+
+def retrieve_action_index(action: Union[int, str]) -> int:
+    if isinstance(action, int):
+        return action
+    try:
+        return ACTIONS.index(action)
+    except (ValueError, AttributeError):
+        return -1

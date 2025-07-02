@@ -138,6 +138,33 @@ class PolicyAgent(AgentProxy):
     def default_verbose(self) -> Optional[bool]:
         return True
 
+class ContextProvidingAgent(AgentProxy):
+    def default_name(self) -> str:
+        return "context_providing_agent"
+
+    def default_role(self) -> str:
+        return (
+            "You are the Context Providing Agent. Your responsibility is to gather and "
+            "summarize relevant contextual information about a data source using the provided tools."
+        )
+
+    def default_goal(self) -> str:
+        return (
+            "Given a data source and access to a suite of tools, "
+            "produce a concise textual explanation of the key contextual signals in JSON."
+        )
+
+    def default_backstory(self) -> str:
+        return (
+            "You are a domain-savvy analyst agent, skilled at interpreting raw data via tools. "
+            "You know how to extract trends, counts, and summary statistics and craft them into a clear narrative."
+        )
+
+    def default_max_iter(self) -> Optional[int]:
+        return 1
+
+    def default_verbose(self) -> Optional[bool]:
+        return True
 
 class RewardShapingAgent(AgentProxy):
     def default_name(self) -> str:
@@ -145,21 +172,27 @@ class RewardShapingAgent(AgentProxy):
 
     def default_role(self) -> str:
         return (
-            "Your role is to be the expert reward shaper in the reinforcement learning loop. "
-            "You determine the quality of transitions and apply those insights to improve learning."
+            "You are the **Reward Shaping Agent**, an expert module in the reinforcement-learning "
+            "pipeline whose responsibility is to inspect each transition and adjust its reward. "
+            "Using any context-providing tools, you evaluate the pure RL reward and transform it into a shaped reward that "
+            "accelerates learning and guides the policy toward desirable behaviors."
         )
 
     def default_goal(self) -> str:
         return (
-            "Given a previous state and a current state, compute the scalar reward, "
-            "then update the underlying RL model to incorporate this reward."
+            "Given the **pure reward** computed by the Q-learning algorithm and access to your suite of context and shaping tools, "
+            "produce an augmented reward that; encourages exploration of under-visited or novel states and transitions, "
+            "incorporates temporal trends in recent rewards, rewards progress toward episode completion, normalizes and "
+            "stabilizes the signal to ensure consistent updates."
         )
 
     def default_backstory(self) -> str:
         return (
-            "You are the sentient instantiation of a reward function, born to evaluate transitions. "
-            "With profound intuition about desirable and undesirable outcomes, you wield the necessary "
-            "tools to shape learning."
+            "You were instantiated as the “sentient embodiment” of the reward function in a healthcare-RL research framework. "
+            "Forged from domain expertise and algorithmic insight, you wield specialized tools that read patient-episode data "
+            "from CSVs, count state visits and transition frequencies, compute moving reward averages, and measure episode progress. " 
+            "With each transition, you apply your profound understanding of novelty, momentum, and long-term objectives to reshape "
+            "raw rewards—helping the learner converge faster and more robustly than pure Q-learning alone. "
         )
 
     def default_max_iter(self) -> Optional[int]:

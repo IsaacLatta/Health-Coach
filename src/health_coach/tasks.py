@@ -17,8 +17,9 @@ from health_coach.tools.rl import (
     compute_reward,
     update_rl_model,
     discretize_probability,
-    amplify_reward,
 )
+
+import health_coach.tools.rl_tools
 
 
 class TaskProxy(ABC):
@@ -203,11 +204,8 @@ class UpdateConfiguration(TaskProxy):
         return "{new_config: dict}"
 
 
-# --- RL tasks ---
-
 class StateResponse(BaseModel):
     state: int
-
 
 class ComputeCurrentState(TaskProxy):
     def name(self) -> str:
@@ -277,7 +275,6 @@ class ComputeAction(TaskProxy):
 class RewardResponse(BaseModel):
     reward: float
 
-
 class ComputeReward(TaskProxy):
     def name(self) -> str:
         return "compute_reward"
@@ -319,22 +316,20 @@ class ShapeReward(TaskProxy):
 
     def default_description(self) -> Optional[str]:
         return (
-            "Given patient features and MDP values, invoke `amplify_reward` to augment reward."
+            "Given a suite of tools shaping rewards, the raw computed reward, "
+            "and the provided context about the reinforcement system's state, shape the reward."
+            " Note that simply passing along the pure computed reward is also valid."
         )
 
     def default_tools(self) -> Optional[List[BaseTool]]:
-        return [amplify_reward]
+        return None
 
     def default_context(self) -> Optional[List[Task]]:
-        # caller can pass context via create(..., context=...)
         return None
 
     def default_tools_input(self) -> Optional[Dict[str, Any]]:
         return {
-            "amplify_reward": {
-                "reward": "{compute_reward.reward}",
-                "factor": "A factor of your choosing."
-            }
+            "See tool comments"
         }
 
     def default_output_json(self) -> Optional[Type[BaseModel]]:
@@ -343,10 +338,38 @@ class ShapeReward(TaskProxy):
     def default_expected_output(self) -> Optional[str]:
         return "{shaped_reward: float}"
 
+class ContextResponse(BaseModel):
+    context: str
+
+class ShapeRewardContext(TaskProxy):
+    def name(self) -> str:
+        return "provide_context"
+
+    def default_description(self) -> Optional[str]:
+        return (
+            "Your responsibility is to provide a textual summary of this reinforcement learning system's state." 
+            "This summary will be used upstream by a Reinforcement Learning specialist to augment the reward function" 
+            " Use the provided context tools to analyze the data source and RETURN ONLY "
+            "{ \"context\": <textual_summary> } as valid JSON."
+        )
+
+    def default_tools(self) -> Optional[List[BaseTool]]:
+        return None
+
+    def default_context(self) -> Optional[List[Task]]:
+        return None
+
+    def default_tools_input(self) -> Optional[Dict[str, Any]]:
+        return None
+
+    def default_output_json(self) -> Optional[Type[BaseModel]]:
+        return ContextResponse
+
+    def default_expected_output(self) -> Optional[str]:
+        return "{context: str}"
 
 class UpdateRLResponse(BaseModel):
     success: bool
-
 
 class UpdateRLModel(TaskProxy):
     def name(self) -> str:
@@ -354,8 +377,9 @@ class UpdateRLModel(TaskProxy):
 
     def default_description(self) -> Optional[str]:
         return (
-            "Invoke `update_rl_model` with state, action, reward, next_state and "
-            "RETURN ONLY `{ \"success\": <bool> }`."
+            "Invoke the necessary tools to update the RL model."
+            "RETURN ONLY `{ \"success\": <bool> }`. "
+            "If a shaped_reward is provided, prefer the shaped_reward over the reward."
         )
 
     def default_tools(self) -> Optional[List[BaseTool]]:
