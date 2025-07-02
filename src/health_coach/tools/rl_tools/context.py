@@ -22,12 +22,15 @@ def _get_episode_path() -> Path:
 def _load_episode(path: Path) -> pd.DataFrame:
     return pd.read_csv(path)
 
+def _get_q_table():
+    return np.load(_Q_TABLE_PATH, allow_pickle=False)
+
 @tool
 def get_q_table() -> np.ndarray:
     """
     Return the Raw Q Table for viewing
     """
-    return np.load(_Q_TABLE_PATH, allow_pickle=False)
+    return _get_q_table()
 
 def _get_visit_count(state: int) -> int:
     df = _load_episode(_get_episode_path())
@@ -54,12 +57,12 @@ def _get_transition_count(prev_state: int, action: Union[int, str], next_state: 
     return int(mask.sum())
 
 @tool
-def get_transition_count(prev_state: int, action: Union[int, str], next_state: int) -> int:
+def get_transition_count(prev_state: int, action: Union[int, str], current_state: int) -> int:
     """
     Return the count of transitions (state, action, next_state) in the episode. 
     If this data is unavailable the tool returns -1.
     """
-    return _get_transition_count(prev_state, action, next_state)
+    return _get_transition_count(prev_state, action, current_state)
 
 @tool
 def get_moving_average(window: int) -> list:

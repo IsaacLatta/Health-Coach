@@ -6,8 +6,7 @@ from health_coach.tools.actions import retrieve_action_index
 
 from health_coach.tools.rl_tools.context import (
     _get_visit_count,
-    get_transition_count,
-    get_moving_average,
+    _get_transition_count,
     _get_episode_length,
 )
 
@@ -36,7 +35,7 @@ def shape_rtb(state: int, action: Union[int, str], next_state: int, reward: floa
     if action_index < 0:
         return reward
 
-    count = get_transition_count(state, action, next_state)
+    count = _get_transition_count(state, action, next_state)
     return reward + NOVELTY_BONUS_FACTOR / (count + 1)
 
 @tool

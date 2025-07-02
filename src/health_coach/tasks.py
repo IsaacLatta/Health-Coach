@@ -19,8 +19,6 @@ from health_coach.tools.rl import (
     discretize_probability,
 )
 
-import health_coach.tools.rl_tools
-
 
 class TaskProxy(ABC):
     @abstractmethod
@@ -348,9 +346,9 @@ class ShapeRewardContext(TaskProxy):
     def default_description(self) -> Optional[str]:
         return (
             "Your responsibility is to provide a textual summary of this reinforcement learning system's state." 
-            "This summary will be used upstream by a Reinforcement Learning specialist to augment the reward function" 
+            " This summary will be used upstream by a Reinforcement Learning specialist to augment the reward function" 
             " Use the provided context tools to analyze the data source and RETURN ONLY "
-            "{ \"context\": <textual_summary> } as valid JSON."
+            "{ \"context\": <textual_summary> } ALWAYS. If UNABLE TO PROVIDE CONTEXT, RETURN ONLY { \"context\": \"Unavailable\"}"
         )
 
     def default_tools(self) -> Optional[List[BaseTool]]:
@@ -360,13 +358,55 @@ class ShapeRewardContext(TaskProxy):
         return None
 
     def default_tools_input(self) -> Optional[Dict[str, Any]]:
-        return None
+        return {
+            "get_visit_count":       {"state": "{compute_current_state.state}"},
+            "get_transition_count":  {
+                "prev_state":  "{fetch_patient_data.history.state}",
+                "action":      "{compute_current_action.action}",
+                "next_state":  "{compute_current_state.state}"
+            },
+            "get_moving_avg":        {"window": "5"},
+            "get_episode_length":    {}
+        }
 
     def default_output_json(self) -> Optional[Type[BaseModel]]:
         return ContextResponse
 
     def default_expected_output(self) -> Optional[str]:
         return "{context: str}"
+
+class ShapeAction(TaskProxy):
+    def name(self) -> str:
+        return "shape_action"
+
+    def default_description(self) -> Optional[str]:
+        return (
+            "Given the current state and optional system context, select an action by dynamically choosing among "
+            "provided exploration strategies (epsilon-greedy, softmax, UCB, Thompson sampling, count bonus, or maxent). "
+            "Return ONLY { \"action\": <int> } as valid JSON."
+        )
+
+    def default_tools(self) -> Optional[List[BaseTool]]:
+        return None
+
+    def default_context(self) -> Optional[List[Task]]:
+        return None
+
+    def default_tools_input(self) -> Optional[Dict[str, Any]]:
+        return {
+            "epsilon_greedy":    {"state": "{compute_current_state.state}", "epsilon": "{epsilon}"},
+            "softmax":           {"state": "{compute_current_state.state}", "temperature": "{temperature}"},
+            "ucb":               {"state": "{compute_current_state.state}", "c": "{ucb_coefficient}"},
+            "thompson":          {"state": "{compute_current_state.state}"},
+            "count_bonus":       {"state": "{compute_current_state.state}", "beta": "{beta}"},
+            "maxent":            {"state": "{compute_current_state.state}", "alpha": "{alpha}"},
+        }
+
+    def default_output_json(self) -> Optional[Type[BaseModel]]:
+        return ActionResponse
+
+    def default_expected_output(self) -> Optional[str]:
+        return "{action: int}"
 
 class UpdateRLResponse(BaseModel):
     success: bool
