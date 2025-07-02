@@ -2,12 +2,12 @@ import math
 from typing import Union
 from crewai.tools import tool
 
-from health_coach.tools import retrieve_action_index
+from health_coach.tools.actions import retrieve_action_index
 
-from health_coach.tools.rl_tools import (
-    get_visit_count,
+from health_coach.tools.rl_tools.context import (
+    _get_visit_count,
     get_transition_count,
-    get_moving_avg,
+    get_moving_average,
     _get_episode_length,
 )
 
@@ -21,7 +21,7 @@ def shape_vcb(state: int, reward: float) -> float:
     VisitationCountBonus: r -> r + EXPLORATION_BONUS_FACTOR / sqrt(N(s) + 1)
     Encourages exploration of under-visited states.
     """
-    count = get_visit_count(state)
+    count = _get_visit_count(state)
     return reward + EXPLORATION_BONUS_FACTOR / math.sqrt(count + 1)
 
 @tool

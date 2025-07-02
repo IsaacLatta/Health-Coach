@@ -29,25 +29,22 @@ def get_q_table() -> np.ndarray:
     """
     return np.load(_Q_TABLE_PATH, allow_pickle=False)
 
+def _get_visit_count(state: int) -> int:
+    df = _load_episode(_get_episode_path())
+    return int((df["state"] == state).sum())
+
 @tool
 def get_visit_count(state: int) -> int:
     """
     Return the count of how many times `state` appears in the episode.
     """
-    df = _load_episode(_get_episode_path())
-    return int((df["state"] == state).sum())
+    return _get_visit_count(state)
 
-@tool
-def get_transition_count(prev_state: int, action: Union[int, str], next_state: int) -> int:
-    """
-    Return the count of transitions (state, action, next_state) in the episode. 
-    If this data is unavailable the tool returns -1.
-    """
-
+def _get_transition_count(prev_state: int, action: Union[int, str], next_state: int) -> int:
     action_index = retrieve_action_index(action)
     if action_index < 0:
         return -1
-
+    
     df = _load_episode(_get_episode_path())
     mask = (
         (df["state"] == prev_state)
@@ -55,6 +52,14 @@ def get_transition_count(prev_state: int, action: Union[int, str], next_state: i
         & (df["next_state"] == next_state)
     )
     return int(mask.sum())
+
+@tool
+def get_transition_count(prev_state: int, action: Union[int, str], next_state: int) -> int:
+    """
+    Return the count of transitions (state, action, next_state) in the episode. 
+    If this data is unavailable the tool returns -1.
+    """
+    return _get_transition_count(prev_state, action, next_state)
 
 @tool
 def get_moving_average(window: int) -> list:

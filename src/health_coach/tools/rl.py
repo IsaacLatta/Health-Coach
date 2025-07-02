@@ -15,16 +15,6 @@ def _load_model(model_path: Path = None) -> np.ndarray:
     path = model_path or _MODEL_PATH
     return np.load(path, allow_pickle=False)
 
-def _amplify_reward(reward: float, factor: float) -> float:
-    return reward * factor
-
-@tool
-def amplify_reward(reward: float, factor: float) -> float:
-    """
-    Amplify the given reward by the specified factor.
-    """
-    return _amplify_reward(reward, factor)
-
 def _select_action(state: int, epsilon: float = 0.1, q_table: np.ndarray = _load_model()) -> int:
     n_actions = q_table.shape[1]
     if random.random() < epsilon:

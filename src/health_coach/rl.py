@@ -6,7 +6,7 @@ import health_coach.tasks as tasks
 import health_coach.agents as agents
 
 import health_coach.tools.rl as rl_tools
-import health_coach.tools.rl_tools.context as shape_reward_tools
+import health_coach.tools.rl_tools.reward as shape_reward_tools
 import health_coach.tools.rl_tools.context as context_tools
 import health_coach.tools.data as data_tools
 
@@ -19,9 +19,9 @@ class QLearningImplementation(RLImplementation):
     def create_crew(self) -> Crew:
         data_loader = agents.DataLoaderAgent().create()
         policy_agent = agents.PolicyAgent().create()
-        reward_shaping_agent = agents.RewardShapingAgent().create(max_iter=3)
+        reward_shaping_agent = agents.RewardShapingAgent().create(max_iter=1)
         data_exporter = agents.DataExportAgent().create()
-        context_agent = agents.ContextProvidingAgent().create(max_iter=5)
+        context_agent = agents.ContextProvidingAgent().create(max_iter=3)
         
         t0 = tasks.FetchPatientHistory().create(data_loader, tools=[data_tools.load_patient_history])
         t1 = tasks.ComputeCurrentState().create(policy_agent, tools=[rl_tools.discretize_probability])
