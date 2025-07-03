@@ -14,9 +14,46 @@ import health_coach.tools.data as data_tools
 class RLImplementation(ABC):
     @abstractmethod
     def create_crew(self) -> Crew:
-        pass
+        ...
+
+    @abstractmethod
+    def create_context_crew(self) -> Crew:
+        ...
+
+    @abstractmethod
+    def create_shaping_crew(self) -> Crew:
+        ...
 
 class QLearningImplementation(RLImplementation):
+    def create_context_crew(self) -> Crew:
+        context_agent = agents.ContextProvidingAgent().create(max_iter=3)
+        generate_context = tasks.ShapeRewardContext().create(
+            context_agent, 
+            tools=context_tools.get_all_tools())
+        
+        return Crew(
+            agents=[context_agent], 
+            tasks=[generate_context], 
+            process=Process.sequential,
+            verbose=True)
+    
+    def create_shaping_crew(self) -> Crew:
+        shaping_agent = agents.RewardShapingAgent().create(max_iter=1)
+        shape_action = tasks.ShapeAction().create(
+            shaping_agent,
+            tools=action_tools.get_all_tools())
+        
+        shape_reward = tasks.ShapeReward().create(
+            shaping_agent, 
+            tools=shape_reward_tools.get_all_tools())
+        
+        return Crew(
+            agents=[shaping_agent], 
+            tasks=[shape_action, shape_reward],
+            process=Process.sequential,
+            verbose=True)
+    
+
     def create_crew(self) -> Crew:
 
         data_loader = agents.DataLoaderAgent().create()

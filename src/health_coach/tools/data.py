@@ -36,11 +36,12 @@ def _load_patient_data(patient_id: str, patient_folder: str =  _PATIENT_DATA_DIR
         try:
             df = pd.read_csv(csv_path)
             if df.empty:
+                print("CSV is empty")
                 return {}
-            # take only the last row
             last_row = df.iloc[-1]
             return last_row.to_dict()
         except Exception:
+            print("Failed to read csv.")
             time.sleep(timeout_base*(2 ** attempt))
     return {}
 

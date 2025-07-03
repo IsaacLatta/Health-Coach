@@ -100,9 +100,13 @@ def apply_action(old_config: dict, action_idx: int) -> dict:
     """
     return _apply_action(old_config, action_idx)
 
+def _discretize_probability(prediction: float) -> int:
+    return min(max(int(prediction * 10), 0), 9)
+
 @tool
 def discretize_probability(prediction: float) -> int:
     """
     Given a continuous prediction value, returns the discretized state 
     """
-    return min(max(int(prediction * 10), 0), 9)
+    return _discretize_probability(prediction)
+    

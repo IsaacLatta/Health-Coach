@@ -4,6 +4,7 @@ import warnings
 import json
 
 # from health_coach.crew import make_health_coach
+import health_coach.flows as my_flows
 
 from datetime import datetime
 
@@ -44,9 +45,19 @@ def replay():
     #     raise Exception(f"An error occurred while replaying the crew: {e}")
 
 import health_coach.tests.integration.rl as rl_tests
+from health_coach.rl import QLearningImplementation
 
 def test():
-    rl_tests.test_all()
+    flow = my_flows.RLFlow()
+    input = my_flows.RLInput()
+    input.patient_id = "0"
+    input.patient_features = [41.0, 1.0, 4.0, 110.0, 172.0, 0.0, 2.0, 158.0, 0.0, 0.0, 1.0, 0.0, 7.0]
+
+    flow.set_input(input)
+    flow.set_rl_implementation(QLearningImplementation())
+    result = flow.kickoff()
+    print(f"Result is {result}")
+    # rl_tests.test_all()
 
 if __name__ == "__main__":
     run()
