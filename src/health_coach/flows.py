@@ -9,7 +9,6 @@ import health_coach.agents as agents
 import health_coach.tools.data as data_tools
 import health_coach.tools.rl as rl_tools
 import health_coach.tools.prediction as pred_tools
-
 class RLInput(BaseModel):
     patient_id: str = ""
     patient_features: List[float] = None
@@ -21,6 +20,7 @@ class RLState(BaseModel):
     context_summary: str = ""
     input: RLInput = 0
     reward: float = 0.0
+    env_reward: float = 0.0
     current_state: int = 0
     previous_state: int = 0
     action: int = 0
@@ -43,15 +43,16 @@ class RLFlow(Flow[RLState]):
     def compute_current_state(self):
         prediction = pred_tools._make_prediction(self.state.input.patient_features)
         self.state.current_state = rl_tools._discretize_probability(prediction)
-        print(f"Current state: {self.state.current_state}")
+        self.state.env_reward = rl_tools._compute_reward(self.state.previous_state, self.state.current_state)
         return 
     
     @listen(compute_current_state)
     def generate_shaping_contexts(self):
         inputs = {
+            "pure_reward" : self.state.env_reward,
             "current_state": self.state.current_state,
             "previous_state": self.state.previous_state,
-            "possible_actions": [0, 1, 2, 3, 4], # hardcode for now
+            "possible_actions": [0, 1, 2, 3, 4, 5, 6], # hardcode for now
         }
         print(f"Input for context pipeline: {inputs}")
 
@@ -90,7 +91,6 @@ class RLFlow(Flow[RLState]):
     
     @listen(generate_shaping_contexts)
     def update_rl_model(self):
-        # would update the model here, for now just print
         return {
             "action": self.state.action,
             "reward" : self.state.reward,

@@ -5,6 +5,7 @@ import json
 
 # from health_coach.crew import make_health_coach
 import health_coach.flows as my_flows
+import health_coach.test_generic_flow as gf
 
 from datetime import datetime
 
@@ -48,16 +49,26 @@ import health_coach.tests.integration.rl as rl_tests
 from health_coach.rl import QLearningImplementation
 
 def test():
-    flow = my_flows.RLFlow()
-    input = my_flows.RLInput()
-    input.patient_id = "0"
-    input.patient_features = [41.0, 1.0, 4.0, 110.0, 172.0, 0.0, 2.0, 158.0, 0.0, 0.0, 1.0, 0.0, 7.0]
+    StateType = gf.GenericState[int, str]
 
-    flow.set_input(input)
-    flow.set_rl_implementation(QLearningImplementation())
-    result = flow.kickoff()
-    print(f"Result is {result}")
-    # rl_tests.test_all()
+# 2) Subscript your flow on *that* one class
+    flow = gf.GenericFlow[StateType]()
+
+    # 3) Wire it up and run
+    inp = gf.GenericInput[int](raw=42)
+    flow.set_input(inp)
+    flow.set_processor(lambda x: f"Number_{x}")
+    out = flow.kickoff()
+    print("Result is", out)  # -> Result is {'result': 'Number_42'}
+    # flow = my_flows.RLFlow()
+    # input = my_flows.RLInput()
+    # input.patient_id = "0"
+    # input.patient_features = [41.0, 1.0, 4.0, 110.0, 172.0, 0.0, 2.0, 158.0, 0.0, 0.0, 1.0, 0.0, 7.0]
+
+    # flow.set_input(input)
+    # flow.set_rl_implementation(QLearningImplementation())
+    # result = flow.kickoff()
+    # print(f"Result is {result}")
 
 if __name__ == "__main__":
     run()

@@ -1,6 +1,7 @@
 from typing import Dict
 from abc import ABC, abstractmethod
 from crewai import Crew, Process
+from typing import Protocol, TypeVar, List, Tuple, Any
 
 import health_coach.tasks as tasks
 import health_coach.agents as agents
@@ -10,93 +11,85 @@ import health_coach.tools.rl_tools.reward as shape_reward_tools
 import health_coach.tools.rl_tools.context as context_tools
 import health_coach.tools.rl_tools.action as action_tools
 import health_coach.tools.data as data_tools
+from health_coach.tools.prediction import _make_prediction
 
-class RLImplementation(ABC):
-    @abstractmethod
-    def create_crew(self) -> Crew:
+StateType  = TypeVar("StateType")
+ActionType = TypeVar("ActionType")
+RewardType = TypeVar("RewardType")
+
+class RLEngine(Protocol[StateType, ActionType, RewardType]):
+    @property
+    def possible_actions(self) -> List[ActionType]:
+        ...
+    @property
+    def encode_state(self, raw_input: Any) -> StateType:
+        ...
+    @property
+    def encode_prev_state(self, input: Any) -> StateType:
+        ...
+    @property
+    def compute_env_reward(self, prev: StateType, cur: StateType) -> RewardType:
+        ...
+    @property
+    def generate_context(self, prev: StateType, cur: StateType, reward: RewardType) -> str:
+        ...
+    @property
+    def shape_reward_and_action(self, prev: StateType, cur: StateType, reward: RewardType, context: str) -> Tuple[ActionType, RewardType]:
+        ...
+    @property
+    def update_model(self, prev: StateType, action: ActionType, reward: RewardType, cur: StateType) -> bool:
         ...
 
+class CrewFactory(ABC):
     @abstractmethod
-    def create_context_crew(self) -> Crew:
+    def create() -> Crew:
         ...
 
-    @abstractmethod
-    def create_shaping_crew(self) -> Crew:
-        ...
+class QLearningEngine(RLEngine[int, int, float]):
+    def __init__(self, context_crew_factory: CrewFactory, shaping_crew_factory: CrewFactory):
+        self.context_crew_factory = context_crew_factory
+        self.shape_crew_factory = shaping_crew_factory
 
-class QLearningImplementation(RLImplementation):
-    def create_context_crew(self) -> Crew:
-        context_agent = agents.ContextProvidingAgent().create(max_iter=3)
-        generate_context = tasks.ShapeRewardContext().create(
-            context_agent, 
-            tools=context_tools.get_all_tools())
-        
-        return Crew(
-            agents=[context_agent], 
-            tasks=[generate_context], 
-            process=Process.sequential,
-            verbose=True)
-    
-    def create_shaping_crew(self) -> Crew:
-        shaping_agent = agents.RewardShapingAgent().create(max_iter=1)
-        shape_action = tasks.ShapeAction().create(
-            shaping_agent,
-            tools=action_tools.get_all_tools())
-        
-        shape_reward = tasks.ShapeReward().create(
-            shaping_agent, 
-            tools=shape_reward_tools.get_all_tools())
-        
-        return Crew(
-            agents=[shaping_agent], 
-            tasks=[shape_action, shape_reward],
-            process=Process.sequential,
-            verbose=True)
-    
+    def possible_actions(self) -> List[int]:
+        return [0, 1, 2, 3, 4, 5, 6]
 
-    def create_crew(self) -> Crew:
+    def encode_prev_state(self, input: Any) -> int:
+        patient_info = data_tools._load_patient_data(self.state.raw_input.patient_id, timeout_base=0,)
+        return patient_info["State"]
 
-        data_loader = agents.DataLoaderAgent().create()
-        policy_agent = agents.PolicyAgent().create()
-        reward_shaping_agent = agents.RewardShapingAgent().create(max_iter=1)
-        data_exporter = agents.DataExportAgent().create()
-        context_agent = agents.ContextProvidingAgent().create(max_iter=3)
-        
-        fetch_patient_history = tasks.FetchPatientHistory().create(data_loader, tools=[data_tools.load_patient_history])
-        compute_current_state = tasks.ComputeCurrentState().create(policy_agent, tools=[rl_tools.discretize_probability])
-        compute_current_reward = tasks.ComputeReward().create(reward_shaping_agent, tools=[rl_tools.compute_reward])
+    def encode_current_state(self, input: Any) -> int:
+        pred = _make_prediction(input.patient_info)
+        return rl_tools._discretize_probability(pred)
 
-        generate_action_context = tasks.ShapeRewardContext().create(
-            context_agent, tools=context_tools.get_all_tools(), 
-            context=[compute_current_state, compute_current_reward, fetch_patient_history])
+    def compute_env_reward(self, prev: int, cur: int) -> float:
+        return rl_tools._compute_reward(prev, cur)
 
-        shape_action = tasks.ShapeAction().create(
-            policy_agent, 
-            tools=action_tools.get_all_tools(), 
-            context=[generate_action_context, compute_current_state])
+    def generate_context(self, prev: int, cur: int, reward: float) -> str:
+        inputs = {
+            "previous_state":   prev,
+            "current_state":    cur,
+            "pure_reward":      reward,
+            "possible_actions": self.possible_actions,
+        }
+        crew = self.context_crew_factory.create()
+        out = crew.kickoff(inputs=inputs)
+        return out.json_dict.get("context", "Unavailable")
 
-        generate_reward_context = tasks.ShapeRewardContext().create(
-            context_agent, 
-            tools=context_tools.get_all_tools(), 
-            context=[shape_action, compute_current_state, compute_current_reward, fetch_patient_history])
-        
-        shape_reward = tasks.ShapeReward().create(
-            reward_shaping_agent, 
-            tools=shape_reward_tools.get_all_tools(), 
-            context=[generate_reward_context, compute_current_state, shape_action, compute_current_reward])
-        
-        update_rl_model = tasks.UpdateRLModel().create(data_exporter, tools=[rl_tools.update_rl_model])
+    def shape_reward_and_action(self, prev: int, cur: int, reward: float, context: str) -> Tuple[int, float]:
+        inputs = {
+            "previous_state":   prev,
+            "current_state":    cur,
+            "pure_reward":      reward,
+            "context":          context,
+            "possible_actions": self.possible_actions,
+        }
+        out = self.shape_crew_factory.kickoff(inputs=inputs)
+        action_task, reward_task = out.tasks_output
+        action = action_task.json_dict["action"]
+        shaped_reward = reward_task.json_dict["shaped_reward"]
+        return action, shaped_reward
 
-        return Crew(agents=[data_loader, reward_shaping_agent, policy_agent, data_exporter],
-                    tasks=[
-                        fetch_patient_history, 
-                        compute_current_state, 
-                        compute_current_reward, 
-                        generate_action_context, 
-                        shape_action, 
-                        generate_reward_context, 
-                        shape_reward, 
-                        update_rl_model],
-                    process=Process.sequential,
-                    verbose=False)
-        
+    def update_model(self, prev: int, action: int, reward: float, cur: int) -> bool:
+        result = {"prev_state" : prev, "action" : int, "reward": float, "current_state": cur}
+        print(f"Result: {result}")
+        return True

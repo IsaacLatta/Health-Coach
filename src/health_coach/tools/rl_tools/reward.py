@@ -3,6 +3,7 @@ from typing import Union
 from crewai.tools import tool
 
 from health_coach.tools.actions import retrieve_action_index
+from health_coach.tools.rl_tools.context import get_moving_average
 
 from health_coach.tools.rl_tools.context import (
     _get_visit_count,
@@ -44,7 +45,7 @@ def shape_trend(reward: float, window: int = 5) -> float:
     TrendShaper: r -> r + TREND_MULTIPLIER * (MA_t - MA_{t-1})
     Boosts the reward when recent reward trend is positive.
     """
-    ma = get_moving_avg(window)
+    ma = get_moving_average(window)
     if len(ma) < 2 or math.isnan(ma[-1]) or math.isnan(ma[-2]):
         return reward
     delta = ma[-1] - ma[-2]

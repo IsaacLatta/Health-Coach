@@ -122,3 +122,4 @@ def get_all_tools():
     Return all exploration tools.
     """
     return [epsilon_greedy, softmax, ucb, count_bonus, thompson, maxent]
+    
