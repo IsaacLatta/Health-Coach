@@ -5,7 +5,6 @@ import json
 
 # from health_coach.crew import make_health_coach
 import health_coach.flows as my_flows
-import health_coach.test_generic_flow as gf
 
 from datetime import datetime
 
@@ -45,30 +44,29 @@ def replay():
     # except Exception as e:
     #     raise Exception(f"An error occurred while replaying the crew: {e}")
 
-import health_coach.tests.integration.rl as rl_tests
-from health_coach.rl import QLearningImplementation
-
+import health_coach.tools.rl_tools as rl_tools 
+from health_coach.rl import  QLearningEngine
+from health_coach.flows import RLFlow, RLInput
 def test():
-    StateType = gf.GenericState[int, str]
+    flow = RLFlow()
+    
+    flow.set_input(RLInput(
+        patient_id="0",
+        patient_features= [41.0, 1.0, 4.0, 110.0, 172.0, 0.0, 2.0, 158.0, 0.0, 0.0, 1.0, 0.0, 7.0]
+    ))
 
-# 2) Subscript your flow on *that* one class
-    flow = gf.GenericFlow[StateType]()
+    flow.set_rl_implementation(
+        QLearningEngine(
+            exploration_tools=rl_tools.action.get_all_tools(),
+            context_tools=rl_tools.context.get_all_tools(),
+            shaping_tools=rl_tools.reward.get_all_tools(),
+            use_crews=True,
+            max_iter=3,
+        )
+    )
+    result = flow.kickoff()
+    print("Result is", result)
 
-    # 3) Wire it up and run
-    inp = gf.GenericInput[int](raw=42)
-    flow.set_input(inp)
-    flow.set_processor(lambda x: f"Number_{x}")
-    out = flow.kickoff()
-    print("Result is", out)  # -> Result is {'result': 'Number_42'}
-    # flow = my_flows.RLFlow()
-    # input = my_flows.RLInput()
-    # input.patient_id = "0"
-    # input.patient_features = [41.0, 1.0, 4.0, 110.0, 172.0, 0.0, 2.0, 158.0, 0.0, 0.0, 1.0, 0.0, 7.0]
-
-    # flow.set_input(input)
-    # flow.set_rl_implementation(QLearningImplementation())
-    # result = flow.kickoff()
-    # print(f"Result is {result}")
-
+    
 if __name__ == "__main__":
     run()
