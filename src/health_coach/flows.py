@@ -1,20 +1,24 @@
 from pydantic import BaseModel
 from typing import Optional
+import numpy as np
 from crewai.flow.flow import Flow, start, listen, and_
-from health_coach.rl import RLEngine
+from crewai.flow.persistence import persist
+from health_coach.rl import RLEngine, QLearningState
 
 class RLInput(BaseModel):
     patient_id: str
     patient_features: list[float]
 
+@persist()
 class RLState(BaseModel):
     class Config:
         arbitrary_types_allowed = True
     
+    q_state: Optional[QLearningState] = None
     rl_engine: Optional[RLEngine] = None
     input: Optional[RLInput] = None
     prev_state: int = 0
-    cur_state: int = 0
+    curr_state: int = 0
     env_reward: float = 0.0
     context: str = ""
     action: int = 0
@@ -32,6 +36,11 @@ class RLFlow(Flow[RLState]):
 
     @start()
     def encode_previous_state(self):
+        if self.state.q_state is not None:
+            print(f"Got persisted state: {self.q_state.previous_state}")
+        else:
+            print("Persisted State is still none.")
+
         eng = self.state.rl_engine
         self.state.prev_state = eng.encode_prev_state(self.state.input)
         return
@@ -39,13 +48,13 @@ class RLFlow(Flow[RLState]):
     @listen(encode_previous_state)
     def encode_state(self):
         eng = self.state.rl_engine
-        self.state.cur_state = eng.encode_curr_state(self.state.input)
+        self.state.curr_state = eng.encode_curr_state(self.state.input)
         return
 
     @listen(encode_state)
     def compute_reward(self):
         eng = self.state.rl_engine
-        self.state.env_reward = eng.compute_env_reward(self.state.prev_state, self.state.cur_state)
+        self.state.env_reward = eng.compute_env_reward(self.state.prev_state, self.state.curr_state)
         return
 
     @listen(compute_reward)
@@ -53,10 +62,9 @@ class RLFlow(Flow[RLState]):
         eng = self.state.rl_engine
         self.state.context = eng.generate_context(
             self.state.prev_state,
-            self.state.cur_state,
+            self.state.curr_state,
             self.state.env_reward
         )
-        print(f"Got context: {self.state.context}")
         return
 
     @listen(make_context)
@@ -64,7 +72,7 @@ class RLFlow(Flow[RLState]):
         eng = self.state.rl_engine
         self.state.action = eng.shape_action(
             self.state.prev_state,
-            self.state.cur_state,
+            self.state.curr_state,
             self.state.env_reward,
             self.state.context
         )
@@ -74,7 +82,7 @@ class RLFlow(Flow[RLState]):
     def shape_reward(self):
         self.state.shaped_reward = self.state.rl_engine.shape_reward(
             self.state.prev_state,
-            self.state.cur_state,
+            self.state.curr_state,
             self.state.env_reward,
             self.state.context
         )
@@ -82,9 +90,34 @@ class RLFlow(Flow[RLState]):
     
     @listen(and_(shape_reward, shape_action))
     def update_model(self):
-        self.state.rl_engine.update_model(
+        self.state.q_state = self.state.rl_engine.save_state(
             self.state.prev_state, 
             self.state.action, 
             self.state.shaped_reward, 
-            self.state.cur_state)
+            self.state.curr_state)
         return
+
+from crewai.utilities.paths import db_storage_path
+from pathlib import Path
+
+print(
+    '! DB default location is: '
+    f'{str(Path(db_storage_path()) / "flow_states.db")}'
+)
+
+class CounterState(BaseModel):
+    value: int = 0
+
+@persist()  # Apply to the entire flow class
+class PersistentCounterFlow(Flow[CounterState]):
+    @start()
+    def increment(self):
+        self.state.value += 1
+        print(f"Incremented to {self.state.value}")
+        return self.state.value
+
+    @listen(increment)
+    def double(self, value):
+        self.state.value = value * 2
+        print(f"Doubled to {self.state.value}")
+        return self.state.value

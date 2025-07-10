@@ -45,27 +45,68 @@ def replay():
     #     raise Exception(f"An error occurred while replaying the crew: {e}")
 
 import health_coach.tools.rl_tools as rl_tools 
-from health_coach.rl import  QLearningEngine
-from health_coach.flows import RLFlow, RLInput
-def test():
-    flow = RLFlow()
-    
-    flow.set_input(RLInput(
-        patient_id="0",
-        patient_features= [41.0, 1.0, 4.0, 110.0, 172.0, 0.0, 2.0, 158.0, 0.0, 0.0, 1.0, 0.0, 7.0]
-    ))
+import health_coach.tools.rl_tools.action
+import health_coach.tools.rl_tools.context
+import health_coach.tools.rl_tools.reward
 
-    flow.set_rl_implementation(
-        QLearningEngine(
-            exploration_tools=rl_tools.action.get_all_tools(),
-            context_tools=rl_tools.context.get_all_tools(),
-            shaping_tools=rl_tools.reward.get_all_tools(),
-            use_crews=True,
-            max_iter=3,
-        )
+from crewai.utilities.paths import db_storage_path
+from pathlib import Path
+
+from health_coach.rl import  QLearningEngine
+from health_coach.flows import RLFlow, RLInput, PersistentCounterFlow
+def test():
+    # flow = RLFlow()
+    
+    # flow.set_input(RLInput(
+    #     patient_id="0",
+    #     patient_features= [41.0, 1.0, 4.0, 110.0, 172.0, 0.0, 2.0, 158.0, 0.0, 0.0, 1.0, 0.0, 7.0]
+    # ))
+
+    # flow.set_rl_implementation(
+    #     QLearningEngine(
+    #         exploration_tools=rl_tools.action.get_all_tools(),
+    #         context_tools=rl_tools.context.get_all_tools(),
+    #         shaping_tools=rl_tools.reward.get_all_tools(),
+    #         use_crews=True,
+    #         max_iter=3,
+    #     )
+    # )
+    # result = flow.kickoff()
+
+    # next_flow = RLFlow()
+    
+    # next_flow.set_input(RLInput(
+    #     patient_id="0",
+    #     patient_features= [41.0, 1.0, 4.0, 110.0, 172.0, 0.0, 2.0, 158.0, 0.0, 0.0, 1.0, 0.0, 7.0]
+    # ))
+
+    # next_flow.set_rl_implementation(
+    #     QLearningEngine(
+    #         exploration_tools=rl_tools.action.get_all_tools(),
+    #         context_tools=rl_tools.context.get_all_tools(),
+    #         shaping_tools=rl_tools.reward.get_all_tools(),
+    #         use_crews=True,
+    #         max_iter=3,
+    #     )
+    # )
+
+    # next_result = next_flow.kickoff()
+    
+    flow = PersistentCounterFlow()
+    result = flow.kickoff(
+        inputs={
+            'id': 'my-unique-id'
+        }
     )
-    result = flow.kickoff()
-    print("Result is", result)
+    print(f"= This run result: {result}")
+
+    next_flow = PersistentCounterFlow()
+    result = next_flow.kickoff(
+        inputs={
+            'id': 'my-unique-id'
+        }
+    )
+    print(f"= This next run result: {result}")
 
     
 if __name__ == "__main__":

@@ -44,27 +44,25 @@ def _get_q_posterior(default_std: float = 1.0) -> np.ndarray:
     stds = np.full_like(q_table, default_std, dtype=float)
     return np.stack([means, stds], axis=-1)
 
-# ------------------ Exploration Tools ------------------
-
 @tool
-def epsilon_greedy(state: int, epsilon: float = 0.1) -> int:
+def epsilon_greedy(current_state: int, epsilon: float = 0.1) -> int:
     """
     Standard ε-greedy: with prob ε pick random action, else the argmax.
     """
     q_table = _get_q_table()
-    s = retrieve_state_index(state)
+    s = retrieve_state_index(current_state)
     n_actions = q_table.shape[1]
     if random.random() < epsilon:
         return random.randrange(n_actions)
     return int(np.argmax(q_table[s]))
 
 @tool
-def softmax(state: int, temperature: float) -> int:
+def softmax(current_state: int, temperature: float) -> int:
     """
     Boltzmann exploration: sample action ∼ softmax(Q(s,·)/temperature).
     """
     q_table = _get_q_table()
-    s = retrieve_state_index(state)
+    s = retrieve_state_index(current_state)
     logits = q_table[s] / temperature
     logits = logits - np.max(logits)
     exp_logits = np.exp(logits)
@@ -72,12 +70,12 @@ def softmax(state: int, temperature: float) -> int:
     return int(np.random.choice(len(probs), p=probs))
 
 @tool
-def ucb(state: int, c: float) -> int:
+def ucb(current_state: int, c: float) -> int:
     """
     Upper-Confidence Bound: argmax_a [Q(s,a) + c * sqrt(ln N(s)+1)/(N(s,a)+1)].
     """
     q_table = _get_q_table()
-    s = retrieve_state_index(state)
+    s = retrieve_state_index(current_state)
     counts = _get_visit_counts()[s]
     total = float(np.sum(counts))
     bonus = c * np.sqrt(np.log(total + 1.0) / (counts + 1.0))
@@ -85,24 +83,24 @@ def ucb(state: int, c: float) -> int:
     return int(np.argmax(scores))
 
 @tool
-def count_bonus(state: int, beta: float) -> int:
+def count_bonus(current_state: int, beta: float) -> int:
     """
     Count-based bonus: argmax_a [Q(s,a) + beta / sqrt(N(s,a)+1)].
     """
     q_table = _get_q_table()
-    s = retrieve_state_index(state)
+    s = retrieve_state_index(current_state)
     counts = _get_visit_counts()[s]
     bonus = beta / np.sqrt(counts + 1.0)
     scores = q_table[s] + bonus
     return int(np.argmax(scores))
 
 @tool
-def thompson(state: int) -> int:
+def thompson(current_state: int) -> int:
     """
     Thompson Sampling: sample Q~N(mean,std) and pick argmax.
     Uses a synthetic posterior with default std.
     """
-    s = retrieve_state_index(state)
+    s = retrieve_state_index(current_state)
     posterior = _get_q_posterior()
     means = posterior[s, :, 0]
     stds  = posterior[s, :, 1]
@@ -110,16 +108,14 @@ def thompson(state: int) -> int:
     return int(np.argmax(samples))
 
 @tool
-def maxent(state: int, alpha: float) -> int:
+def maxent(current_state: int, alpha: float) -> int:
     """
     Maximum-Entropy policy: alias for softmax(state, temperature=alpha).
     """
-    return softmax(state=state, temperature=alpha)
-
+    return softmax(current_state=current_state, temperature=alpha)
 
 def get_all_tools():
     """
     Return all exploration tools.
     """
     return [epsilon_greedy, softmax, ucb, count_bonus, thompson, maxent]
-    

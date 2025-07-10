@@ -1,17 +1,23 @@
-from typing import Any, List, Tuple, Protocol, TypeVar, Generic
+from typing import Any, List, Optional
+from pydantic import BaseModel
+import numpy as np
 from crewai import Crew, Process
 from crewai.tools import BaseTool
 
 from abc import ABC, abstractmethod
 
+import inspect
 import health_coach.tools.data as data_tools
 import health_coach.tools.rl as rl_tools
 from health_coach.tools.prediction import _make_prediction
-import health_coach.tools.rl_tools.context as context_tools
-import health_coach.tools.rl_tools.action  as action_tools
-import health_coach.tools.rl_tools.reward  as shape_reward_tools
 import health_coach.tasks as tasks
 import health_coach.agents as agents
+
+class QLearningState(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+    q_table: Optional[np.ndarray] = None
+    previous_state: int = 0
 
 class RLEngine(ABC):
     @abstractmethod
@@ -36,25 +42,34 @@ class RLEngine(ABC):
     def shape_reward(self, prev: int, cur: int, reward: float, context: str) -> float:
         ...
     @abstractmethod
-    def update_model(self, prev: int, action: int, reward: float, cur: int) -> bool:
+    def save_state(self, prev: int, action: int, reward: float, cur: int) -> QLearningState:
         ...
 
 class QLearningEngine(RLEngine):
     def __init__(
         self,
         exploration_tools: List[Any],
-        context_tools: List[BaseTool],
+        context_tools: List[Any],
         shaping_tools: List[Any],
         use_crews: bool = True,
         max_iter: int = 3,
         verbose: bool = False,
     ):
         self.exploration_tools = exploration_tools
-        self.context_tools     = context_tools
-        self.shaping_tools     = shaping_tools
-        self.use_crews         = use_crews
-        self.max_iter          = max_iter
-        self.verbose           = verbose
+        self.context_tools = context_tools
+        self.shaping_tools = shaping_tools
+        self.use_crews = use_crews
+        self.max_iter = max_iter
+        self.verbose = verbose
+
+    def _run_tool(tool_fn, **inputs):
+        sig = inspect.signature(tool_fn)
+        kwargs = {
+            name: inputs[name]
+            for name in sig.parameters
+            if name in inputs
+        }
+        return tool_fn(**kwargs)
 
     def possible_actions(self) -> List[int]:
         return list(range(7))
@@ -78,38 +93,25 @@ class QLearningEngine(RLEngine):
             "possible_actions": self.possible_actions(),
         }
 
-        if self.use_crews:
-            agent = agents.ContextProvidingAgent().create(
-                max_iter=self.max_iter,
-                verbose=self.verbose,
-            )
-            task = tasks.ShapeRewardContext().create(
-                agent,
-                tools=self.context_tools,
-            )
-            crew = Crew(
-                agents=[agent],
-                tasks=[task],
-                process=Process.sequential,
-                verbose=self.verbose,
-            )
-            out = crew.kickoff(inputs=inputs)
-            return out.json_dict.get("context", "Unavailable")
+        if not self.use_crews:
+            return "Unavailable"
+        
+        agent = agents.ContextProvidingAgent().create(max_iter=self.max_iter, verbose=self.verbose)
+        task = tasks.ShapeRewardContext().create(agent, tools=self.context_tools)
+        crew = Crew(
+            agents=[agent],
+            tasks=[task],
+            process=Process.sequential,
+            verbose=self.verbose,
+        )
 
-        for tool in self.context_tools:
-            try:
-                ctx = tool(**inputs)
-                if isinstance(ctx, str):
-                    return ctx
-            except Exception:
-                continue
+        out = crew.kickoff(inputs=inputs)
+        return out.json_dict.get("context", "Unavailable")
 
-        return "Unavailable"
-
-    def shape_action(self, prev: int, cur: int, reward: float, context: str) -> int:
+    def shape_action(self, prev_state: int, current_state: int, reward: float, context: str) -> int:
         inputs = {
-            "previous_state":   prev,
-            "current_state":    cur,
+            "previous_state":   prev_state,
+            "current_state":    current_state,
             "pure_reward":      reward,
             "context":          context,
             "possible_actions": self.possible_actions(),
@@ -129,9 +131,9 @@ class QLearningEngine(RLEngine):
 
         action = self.exploration_tools[0](**inputs)
         shaped = action
-        for tool in self.shaping_tools:
-            shaped = tool(state=cur, reward=shaped)
-        return action, shaped
+        for tool in self.exploration_tools:
+            shaped = self._run_tool(tool, **inputs)
+        return shaped
 
     def shape_reward(self, prev: int, cur: int, reward: float, context: str) -> float:
             inputs = {
@@ -154,14 +156,14 @@ class QLearningEngine(RLEngine):
                 out = crew.kickoff(inputs=inputs)
                 return out.json_dict["shaped_reward"]
             
-            action = self.exploration_tools[0](**inputs)
-            shaped = action
+            shaped = self.shaping_tools[0](**inputs)
             for tool in self.shaping_tools:
-                shaped = tool(state=cur, reward=shaped)
+                shaped = self._run_tool(tool, **inputs)
             return shaped
 
-    def update_model(self, prev: int, action: int, reward: float, cur: int) -> bool:
-        print(f"FINAL OUTPUT:\n\tPrevious State: {prev}\n\tAction: {action}\n\t Reward: {reward}\n\tCurrent State: {cur}")
-        # would call 
-        # return rl_tools._update_rl_model(prev, action, reward, cur)
-        return True
+    def save_state(self, prev: int, action: int, reward: float, cur: int) -> QLearningState:
+        print(f"FINAL OUTPUT:\n\tPrevious State: {prev}\n\tAction: {action}\n\tReward: {reward}\n\tCurrent State: {cur}")
+        state = QLearningState()
+        state.previous_state = prev
+        state.q_table = np.zeros(shape=(10, 4), dtype=float)
+        return state
