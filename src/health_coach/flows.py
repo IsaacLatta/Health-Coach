@@ -97,27 +97,20 @@ class RLFlow(Flow[RLState]):
             self.state.curr_state)
         return
 
-from crewai.utilities.paths import db_storage_path
-from pathlib import Path
-
-print(
-    '! DB default location is: '
-    f'{str(Path(db_storage_path()) / "flow_states.db")}'
-)
-
 class CounterState(BaseModel):
+    id: str = 'my-unique-id'
     value: int = 0
 
-@persist()  # Apply to the entire flow class
+@persist(verbose=True)
 class PersistentCounterFlow(Flow[CounterState]):
     @start()
     def increment(self):
         self.state.value += 1
-        print(f"Incremented to {self.state.value}")
+        print(f"+ Incremented to {self.state.value}")
         return self.state.value
 
     @listen(increment)
     def double(self, value):
         self.state.value = value * 2
-        print(f"Doubled to {self.state.value}")
+        print(f"x Doubled to {self.state.value}")
         return self.state.value

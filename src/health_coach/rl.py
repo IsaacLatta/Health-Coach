@@ -53,7 +53,7 @@ class QLearningEngine(RLEngine):
         shaping_tools: List[Any],
         use_crews: bool = True,
         max_iter: int = 3,
-        verbose: bool = False,
+        verbose: bool = True,
     ):
         self.exploration_tools = exploration_tools
         self.context_tools = context_tools

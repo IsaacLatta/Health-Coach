@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
+from crewai.tasks.hallucination_guardrail import HallucinationGuardrail
+from crewai.knowledge.source import base_knowledge_source
 from crewai import Agent
+from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
+
+
 from pydantic import BaseModel
 
 class AgentProxy(ABC):
@@ -21,13 +26,14 @@ class AgentProxy(ABC):
     def default_backstory(self) -> str:
         ...
 
-    @abstractmethod
-    def default_max_iter(self) -> Optional[int]:
-        ...
+    def default_knowledge_source(self) -> Optional[base_knowledge_source.BaseKnowledgeSource]:
+        None
 
-    @abstractmethod
+    def default_max_iter(self) -> Optional[int]:
+        return 1
+
     def default_verbose(self) -> Optional[bool]:
-        ...
+        return True
 
     def create(self, **overrides: Any) -> Agent:
         kwargs: Dict[str, Any] = {}
@@ -49,6 +55,9 @@ class AgentProxy(ABC):
         verbose = overrides.get("verbose", self.default_verbose())
         if verbose is not None:
             kwargs["verbose"] = verbose
+        knowledge_source = overrides.get("knowledge_source", self.default_knowledge_source())
+        if knowledge_source is not None:
+            kwargs["knowledge_source"] = knowledge_source
 
         return Agent(**kwargs)
 
@@ -80,9 +89,6 @@ class DataLoaderAgent(AgentProxy):
     def default_max_iter(self) -> Optional[int]:
         return 3
 
-    def default_verbose(self) -> Optional[bool]:
-        return True
-
 class DataExportAgent(AgentProxy):
     def default_name(self) -> str:
         return "data_export_agent"
@@ -110,9 +116,6 @@ class DataExportAgent(AgentProxy):
     def default_max_iter(self) -> Optional[int]:
         return 3
 
-    def default_verbose(self) -> Optional[bool]:
-        return True
-
 class PolicyAgent(AgentProxy):
     def default_name(self) -> str:
         return "policy_agent"
@@ -131,12 +134,6 @@ class PolicyAgent(AgentProxy):
             "You are the sentient embodiment of a decision-maker. Through countless simulations, "
             "you have mastered translating states into discrete actions using the select_action tool."
         )
-
-    def default_max_iter(self) -> Optional[int]:
-        return 1
-
-    def default_verbose(self) -> Optional[bool]:
-        return True
 
 class ContextProvidingAgent(AgentProxy):
     def default_name(self) -> str:
@@ -161,10 +158,10 @@ class ContextProvidingAgent(AgentProxy):
         )
 
     def default_max_iter(self) -> Optional[int]:
-        return 1
-
-    def default_verbose(self) -> Optional[bool]:
-        return True
+        return 3
+    
+    def default_knowledge_source(self):
+        return TextFileKnowledgeSource(file_paths=["qlearning/q_learning.txt"])
 
 class RewardShapingAgent(AgentProxy):
     def default_name(self) -> str:
@@ -194,9 +191,6 @@ class RewardShapingAgent(AgentProxy):
             "With each transition, you apply your profound understanding of novelty, momentum, and long-term objectives to reshape "
             "raw rewards—helping the learner converge faster and more robustly than pure Q-learning alone. "
         )
-
-    def default_max_iter(self) -> Optional[int]:
-        return 1
-
-    def default_verbose(self) -> Optional[bool]:
-        return True
+    
+    def default_knowledge_source(self):
+        return TextFileKnowledgeSource(file_paths=["qlearning/shaping.txt"])
