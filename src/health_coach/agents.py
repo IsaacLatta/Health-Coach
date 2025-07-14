@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
+from pydantic import BaseModel
 
 from crewai.tasks.hallucination_guardrail import HallucinationGuardrail
 from crewai.knowledge.source import base_knowledge_source
 from crewai import Agent
-from crewai.knowledge.source.text_file_knowledge_source import TextFileKnowledgeSource
+from crewai.knowledge.source.string_knowledge_source import StringKnowledgeSource
 
-
-from pydantic import BaseModel
+from health_coach.tools.rl_tools.knowledge import CONTEXT_KNOWLEDGE_SOURCE, SHAPING_KNOWLEDGE_SOURCE
 
 class AgentProxy(ABC):
     @abstractmethod
@@ -161,7 +161,8 @@ class ContextProvidingAgent(AgentProxy):
         return 3
     
     def default_knowledge_source(self):
-        return TextFileKnowledgeSource(file_paths=["qlearning/q_learning.txt"])
+        return StringKnowledgeSource(content=CONTEXT_KNOWLEDGE_SOURCE)
+        # return TextFileKnowledgeSource(file_paths=["qlearning/q_learning.txt"])
 
 class RewardShapingAgent(AgentProxy):
     def default_name(self) -> str:
@@ -193,4 +194,5 @@ class RewardShapingAgent(AgentProxy):
         )
     
     def default_knowledge_source(self):
-        return TextFileKnowledgeSource(file_paths=["qlearning/shaping.txt"])
+        return StringKnowledgeSource(content=SHAPING_KNOWLEDGE_SOURCE)
+        # return TextFileKnowledgeSource(file_paths=["qlearning/shaping.txt"])

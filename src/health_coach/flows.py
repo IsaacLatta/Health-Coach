@@ -36,11 +36,6 @@ class RLFlow(Flow[RLState]):
 
     @start()
     def encode_previous_state(self):
-        if self.state.q_state is not None:
-            print(f"Got persisted state: {self.q_state.previous_state}")
-        else:
-            print("Persisted State is still none.")
-
         eng = self.state.rl_engine
         self.state.prev_state = eng.encode_prev_state(self.state.input)
         return
@@ -76,41 +71,24 @@ class RLFlow(Flow[RLState]):
             self.state.env_reward,
             self.state.context
         )
+        print(f"Shaped action {self.state.action}")
         return
 
-    @listen(make_context)
-    def shape_reward(self):
-        self.state.shaped_reward = self.state.rl_engine.shape_reward(
-            self.state.prev_state,
-            self.state.curr_state,
-            self.state.env_reward,
-            self.state.context
-        )
-        return
+    # @listen(make_context)
+    # def shape_reward(self):
+    #     self.state.shaped_reward = self.state.rl_engine.shape_reward(
+    #         self.state.prev_state,
+    #         self.state.curr_state,
+    #         self.state.env_reward,
+    #         self.state.context
+    #     )
+    #     return
     
-    @listen(and_(shape_reward, shape_action))
-    def update_model(self):
-        self.state.q_state = self.state.rl_engine.save_state(
-            self.state.prev_state, 
-            self.state.action, 
-            self.state.shaped_reward, 
-            self.state.curr_state)
-        return
-
-class CounterState(BaseModel):
-    id: str = 'my-unique-id'
-    value: int = 0
-
-@persist(verbose=True)
-class PersistentCounterFlow(Flow[CounterState]):
-    @start()
-    def increment(self):
-        self.state.value += 1
-        print(f"+ Incremented to {self.state.value}")
-        return self.state.value
-
-    @listen(increment)
-    def double(self, value):
-        self.state.value = value * 2
-        print(f"x Doubled to {self.state.value}")
-        return self.state.value
+    # @listen(and_(shape_reward, shape_action))
+    # def update_model(self):
+    #     self.state.q_state = self.state.rl_engine.save_state(
+    #         self.state.prev_state, 
+    #         self.state.action, 
+    #         self.state.shaped_reward, 
+    #         self.state.curr_state)
+    #     return

@@ -1,3 +1,5 @@
+
+CONTEXT_KNOWLEDGE_SOURCE = """ 
 ## 1. Introduction
 
 Reinforcement learning (RL) is a framework for sequential decision-making in which an agent interacts with an environment to maximize a cumulative reward signal. In our research, we compare **pure Q-learning**—a classical, model-free RL algorithm—with **agent-augmented Q-learning**, where a learned “shaper” agent uses dynamic context to modulate both action selection and reward signals. The goal of this knowledge source is to ground a ContextProvidingAgent in:
@@ -191,21 +193,111 @@ elif episode_progress > 0.8:
 * **Computational overhead**: limit expensive context calculations (e.g., count-based bonuses) to every N steps.
 * **Preserve convergence guarantees**: ensure potential-based shaping is used when optimal-policy invariance is required .
 * **Avoid conflicting signals**: normalize and bound shaping terms so they never dominate raw rewards.
+"""
+
+SHAPING_KNOWLEDGE_SOURCE = """"
+
+## 1. Proven Strategies for Dynamically Optimizing Q-Learning
+
+### 1.1 Adaptive Exploration
+
+**ε-greedy selection**
+With probability 1 − epsilon, the agent exploits by choosing
+
+```plaintext
+a = argmaxₐ Q(s,a)
+```
+
+and with probability epsilon, it explores by selecting a random action:
+
+```plaintext
+if random() < epsilon:
+    a = random_action()
+else:
+    a = argmaxₐ Q(s,a)
+```
+
+Here 0 < epsilon < 1 controls the explore–exploit trade-off. Epsilon can be fixed, decay over time (e.g., epsilon\_t = epsilon₀·decay^t), or be adapted based on performance metrics ([Wikipedia][6]).
+
+**Softmax (Boltzmann) selection**
+Actions are sampled according to a Gibbs distribution over Q-values:
+
+```plaintext
+P(a|s) = exp(Q(s,a)/tau) / Σ_b exp(Q(s,b)/tau)
+```
+
+where tau > 0 is a “temperature” parameter: high tau encourages uniform exploration, low tau concentrates on high-value actions ([Wikipedia][7]).
+
+**Upper Confidence Bound (UCB1)**
+Balances exploitation with an optimism bonus:
+
+```plaintext
+UCB1_i(t) = Q_i + sqrt((2 · ln t) / N_i)
+```
+
+* Q\_i: empirical mean reward of arm i
+* N\_i: count of pulls of arm i
+* t: total number of trials
+  Arms with low N\_i get larger bonuses, driving systematic exploration under the “optimism in the face of uncertainty” principle ([Wikipedia][8]).
+
+**Thompson Sampling**
+A Bayesian probability-matching approach. Maintain a posterior P(θ|D) over model parameters θ; each round:
+
+```plaintext
+θ* ~ P(θ|D)
+a = argmaxₐ E[r | s, a, θ*]
+```
+
+By sampling θ\* from the posterior, the agent naturally explores actions in proportion to their probability of being optimal ([Wikipedia][9]).
+
+**Count-based novelty bonus**
+Augment the environment reward with an intrinsic bonus inversely proportional to the square root of state-action visit counts:
+
+```plaintext
+bonus(s,a) = β / sqrt(N(s,a) + 1)
+r' = r + bonus(s,a)
+```
+
+This encourages visiting rarely-seen pairs first. For continuous or high-dimensional spaces, “pseudo-counts” derived from density models can be used ([NeurIPS Papers][10]).
+
+**Maximum-entropy exploration**
+Introduce an intrinsic reward equal to the negative policy entropy:
+
+```plaintext
+r_intrinsic = - Σₐ π(a|s) · log π(a|s)
+r' = r + η · r_intrinsic
+```
+
+Maximizing this term encourages a more uniform, diverse action distribution ([Wikipedia][11]).
 
 ---
 
-## References
+### 1.2 Reward Shaping
 
-[1] “Markov decision process,” *Wikipedia*. [Online]. Available: https://en.wikipedia.org/wiki/Markov_decision_process. Accessed: Jul. 10, 2025.  
-[2] “Q-learning,” *Wikipedia*. [Online]. Available: https://en.wikipedia.org/wiki/Q-learning. Accessed: Jul. 10, 2025.  
-[3] “What is sample efficiency in RL?,” *Milvus*. [Online]. Available: https://milvus.io/ai-quick-reference/what-is-sample-efficiency-in-rl. Accessed: Jul. 10, 2025.  
-[4] “Exploration–exploitation dilemma,” *Wikipedia*. [Online]. Available: https://en.wikipedia.org/wiki/Exploration%E2%80%93exploitation_dilemma. Accessed: Jul. 10, 2025.  
-[5] “Bellman equation,” *Wikipedia*. [Online]. Available: https://en.wikipedia.org/wiki/Bellman_equation. Accessed: Jul. 10, 2025.  
+**Potential-based shaping**
+Adds a shaping term derived from a potential function Φ(s) that provably preserves the optimal policy:
 
-
-[2] “Q-learning,” *Wikipedia*. [Online]. Available: https://en.wikipedia.org/wiki/Q-learning. Accessed: Jul. 10, 2025.  
-[6] “Moving average,” *Wikipedia*. [Online]. Available: https://en.wikipedia.org/wiki/Moving_average. Accessed: Jul. 10, 2025.  
-[7] “Count-based exploration,” *Wikipedia*. [Online]. Available: https://en.wikipedia.org/wiki/Count-based_exploration. Accessed: Jul. 10, 2025.  
-[8] “Temporal difference learning,” *Wikipedia*. [Online]. Available: https://en.wikipedia.org/wiki/Temporal_difference_learning. Accessed: Jul. 10, 2025.  
-[9] R. S. Sutton and A. G. Barto, *Reinforcement Learning: An Introduction*, 2nd ed., MIT Press, 2018.  
+```plaintext
+r'(s,a,s') = r(s,a,s') + γ · Φ(s') - Φ(s)
 ```
+
+Here γ is the discount factor. The difference in potential effectively “guides” learning without changing the set of optimal policies ([Artificial Intelligence Stack Exchange][12]).
+
+**Progress-based (trend) shaping**
+Incorporates intermediate progress signals—e.g., subtask completion metrics or formal temporal-logic progress—into the reward:
+
+```plaintext
+r'(s,a,s') = r(s,a,s') + w(s) · Progress(s')
+```
+
+where Progress(s') quantifies advancement toward subgoals and w(s) may be updated dynamically based on recent performance trends ([arXiv][13]).
+
+**Magnitude amplification vs. damping**
+Learns a state- or action-dependent weight w(s,a) that scales the shaping term to amplify helpful rewards and dampen misleading ones:
+
+```plaintext
+r'(s,a,s') = r(s,a,s') + w(s,a) · F(s,a,s')
+```
+
+The weight function w(s,a) can itself be optimized (e.g., via gradient methods) to maximize the true cumulative return ([arXiv][13]).
+"""

@@ -53,7 +53,7 @@ from crewai.utilities.paths import db_storage_path
 from pathlib import Path
 
 from health_coach.rl import  QLearningEngine
-from health_coach.flows import RLFlow, RLInput, PersistentCounterFlow
+from health_coach.flows import RLFlow, RLInput
 def test():
     flow = RLFlow()
     
@@ -62,15 +62,24 @@ def test():
         patient_features= [41.0, 1.0, 4.0, 110.0, 172.0, 0.0, 2.0, 158.0, 0.0, 0.0, 1.0, 0.0, 7.0]
     ))
 
-    flow.set_rl_implementation(
-        QLearningEngine(
+    agent_engine = QLearningEngine(
             exploration_tools=rl_tools.action.get_all_tools(),
             context_tools=rl_tools.context.get_all_tools(),
             shaping_tools=rl_tools.reward.get_all_tools(),
             use_crews=True,
             max_iter=3,
         )
+
+    pure_engine = QLearningEngine(
+        exploration_tools=rl_tools.action.get_all_tool_funcs(),
+        shaping_tools=rl_tools.reward.get_all_tool_funcs(),
+        context_tools=None,
+        use_crews=False
     )
+
+    flow.set_rl_implementation(pure_engine)
+
+
     result = flow.kickoff()
 
     # next_flow = RLFlow()

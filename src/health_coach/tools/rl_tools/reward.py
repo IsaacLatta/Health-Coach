@@ -15,14 +15,26 @@ EXPLORATION_BONUS_FACTOR: float = 0.1
 NOVELTY_BONUS_FACTOR: float = 0.1
 TREND_MULTIPLIER: float = 0.9 
 
+def shape_vcb_fn(state: int, reward: float) -> float:
+    count = _get_visit_count(state)
+    return reward + EXPLORATION_BONUS_FACTOR / math.sqrt(count + 1)
+
 @tool
 def shape_vcb(state: int, reward: float) -> float:
     """
     VisitationCountBonus: r -> r + EXPLORATION_BONUS_FACTOR / sqrt(N(s) + 1)
     Encourages exploration of under-visited states.
     """
-    count = _get_visit_count(state)
-    return reward + EXPLORATION_BONUS_FACTOR / math.sqrt(count + 1)
+    return shape_vcb_fn(state, reward)
+
+def shape_rtb_fn(state: int, action: Union[int, str], next_state: int, reward: float) -> float:
+    action_index = retrieve_action_index(action)
+    if action_index < 0:
+        return reward
+
+    count = _get_transition_count(state, action, next_state)
+    return reward + NOVELTY_BONUS_FACTOR / (count + 1)
+
 
 @tool
 def shape_rtb(state: int, action: Union[int, str], next_state: int, reward: float) -> float:
@@ -31,13 +43,14 @@ def shape_rtb(state: int, action: Union[int, str], next_state: int, reward: floa
     Rewards novel transitions by giving bonus to infrequent (s,a,s') tuples.
     If this reward shaping function is unavailable, the tool returns -1.
     """
+    return shape_rtb_fn(state, action, next_state, reward)
 
-    action_index = retrieve_action_index(action)
-    if action_index < 0:
+def shape_trend_fn(reward: float, window: int = 5) -> float:
+    ma = get_moving_average(window)
+    if len(ma) < 2 or math.isnan(ma[-1]) or math.isnan(ma[-2]):
         return reward
-
-    count = _get_transition_count(state, action, next_state)
-    return reward + NOVELTY_BONUS_FACTOR / (count + 1)
+    delta = ma[-1] - ma[-2]
+    return reward + TREND_MULTIPLIER * delta
 
 @tool
 def shape_trend(reward: float, window: int = 5) -> float:
@@ -45,13 +58,9 @@ def shape_trend(reward: float, window: int = 5) -> float:
     TrendShaper: r -> r + TREND_MULTIPLIER * (MA_t - MA_{t-1})
     Boosts the reward when recent reward trend is positive.
     """
-    ma = get_moving_average(window)
-    if len(ma) < 2 or math.isnan(ma[-1]) or math.isnan(ma[-2]):
-        return reward
-    delta = ma[-1] - ma[-2]
-    return reward + TREND_MULTIPLIER * delta
+    return shape_trend_fn(reward, window)
 
-def _amplify_reward(reward: float, factor: float) -> float:
+def shape_amplify_fn(reward: float, factor: float) -> float:
     return reward * factor
 
 @tool
@@ -59,7 +68,13 @@ def shape_amplify(pure_reward: float, factor: float) -> float:
     """
     Amplify the given pure rl reward by the specified factor.
     """
-    return _amplify_reward(pure_reward, factor)
+    return shape_amplify_fn(pure_reward, factor)
+
+def shape_progress_fn(reward: float, timestep: int) -> float:
+    L = _get_episode_length()
+    if L <= 0:
+        return reward
+    return reward * (timestep / L)
 
 @tool
 def shape_progress(reward: float, timestep: int) -> float:
@@ -67,10 +82,10 @@ def shape_progress(reward: float, timestep: int) -> float:
     EpisodeProgressShaper: r -> r * (timestep / L)
     Gradually increases reward influence as episode progresses.
     """
-    L = _get_episode_length()
-    if L <= 0:
-        return reward
-    return reward * (timestep / L)
+    return shape_progress_fn(reward, timestep)
 
 def get_all_tools():
     return [shape_vcb, shape_rtb, shape_trend, shape_progress, shape_amplify]
+
+def get_all_tool_funcs():
+    return [shape_vcb_fn, shape_rtb_fn, shape_trend_fn, shape_progress_fn, shape_amplify_fn]
