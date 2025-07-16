@@ -5,18 +5,11 @@ from crewai.flow.flow import Flow, start, listen, and_
 from crewai.flow.persistence import persist
 from health_coach.rl import RLEngine, QLearningState
 
-class RLInput(BaseModel):
-    patient_id: str
-    patient_features: list[float]
-
-@persist()
 class RLState(BaseModel):
     class Config:
         arbitrary_types_allowed = True
     
-    q_state: Optional[QLearningState] = None
     rl_engine: Optional[RLEngine] = None
-    input: Optional[RLInput] = None
     prev_state: int = 0
     curr_state: int = 0
     env_reward: float = 0.0
@@ -25,8 +18,6 @@ class RLState(BaseModel):
     shaped_reward: float = 0.0
 
 class RLFlow(Flow[RLState]):
-    def set_input(self, input: RLInput):
-        self.state.input = input
 
     def set_rl_implementation(self, engine: RLEngine):
         self.state.rl_engine = engine
@@ -74,21 +65,21 @@ class RLFlow(Flow[RLState]):
         print(f"Shaped action {self.state.action}")
         return
 
-    # @listen(make_context)
-    # def shape_reward(self):
-    #     self.state.shaped_reward = self.state.rl_engine.shape_reward(
-    #         self.state.prev_state,
-    #         self.state.curr_state,
-    #         self.state.env_reward,
-    #         self.state.context
-    #     )
-    #     return
+    @listen(make_context)
+    def shape_reward(self):
+        self.state.shaped_reward = self.state.rl_engine.shape_reward(
+            self.state.prev_state,
+            self.state.curr_state,
+            self.state.env_reward,
+            self.state.context
+        )
+        return
     
-    # @listen(and_(shape_reward, shape_action))
-    # def update_model(self):
-    #     self.state.q_state = self.state.rl_engine.save_state(
-    #         self.state.prev_state, 
-    #         self.state.action, 
-    #         self.state.shaped_reward, 
-    #         self.state.curr_state)
-    #     return
+    @listen(and_(shape_reward, shape_action))
+    def update_model(self):
+        self.state.rl_engine.save_state(
+            self.state.prev_state, 
+            self.state.action, 
+            self.state.shaped_reward, 
+            self.state.curr_state)
+        return

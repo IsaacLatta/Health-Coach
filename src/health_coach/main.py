@@ -66,18 +66,10 @@ def test():
             exploration_tools=rl_tools.action.get_all_tools(),
             context_tools=rl_tools.context.get_all_tools(),
             shaping_tools=rl_tools.reward.get_all_tools(),
-            use_crews=True,
             max_iter=3,
         )
 
-    pure_engine = QLearningEngine(
-        exploration_tools=rl_tools.action.get_all_tool_funcs(),
-        shaping_tools=rl_tools.reward.get_all_tool_funcs(),
-        context_tools=None,
-        use_crews=False
-    )
-
-    flow.set_rl_implementation(pure_engine)
+    flow.set_rl_implementation(agent_engine)
 
 
     result = flow.kickoff()
