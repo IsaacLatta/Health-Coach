@@ -15,6 +15,10 @@ ACTIONS = [
 def discretize_probability(p: float) -> int:
     return min(max(int(p * 10), 0), 9)
 
+def action_to_noise(action: int, gaussian_std: float = 0.02) -> float:
+    noise: int = np.random.normal(0, gaussian_std)
+    return noise if action % 2 == 0 else noise*(-1)
+
 def generate_trend_step(
     t: int,
     T: int,

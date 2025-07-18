@@ -4,9 +4,9 @@ import random
 from pathlib import Path
 from typing import Any, List, Tuple, Dict
 
-from rl_data_gen.drift import simulate_drift
+from health_coach.rl_data_gen.drift import simulate_drift
 
-BASE_DIR = Path(__file__).resolve().parents[1]
+BASE_DIR = Path(__file__).resolve().parents[3]
 _DATA_SET_PATH = BASE_DIR/"data"/"Heart_Disease_Prediction.csv"
 _MODEL_PATH = BASE_DIR/"models"/"cv_pred_log_reg.pkl"
 

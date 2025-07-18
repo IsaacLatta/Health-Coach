@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Any
 import numpy as np
 from crewai.flow.flow import Flow, start, listen, and_
 from crewai.flow.persistence import persist
@@ -16,19 +16,19 @@ class RLState(BaseModel):
     context: str = ""
     action: int = 0
     shaped_reward: float = 0.0
+    input: Any = None
 
 class RLFlow(Flow[RLState]):
 
-    def set_rl_implementation(self, engine: RLEngine):
+    def set_rl_engine(self, engine: RLEngine):
         self.state.rl_engine = engine
-        if self.state.input is None:
-            raise RuntimeError("Must call set_input() first")
-        self.state.prev_state = engine.encode_prev_state(self.state.input)
+
+    def set_input(self, input: Any):
+        self.state.input = input
 
     @start()
     def encode_previous_state(self):
-        eng = self.state.rl_engine
-        self.state.prev_state = eng.encode_prev_state(self.state.input)
+        self.state.prev_state = self.state.rl_engine.encode_prev_state(self.state.input)
         return
 
     @listen(encode_previous_state)
@@ -77,9 +77,9 @@ class RLFlow(Flow[RLState]):
     
     @listen(and_(shape_reward, shape_action))
     def update_model(self):
-        self.state.rl_engine.save_state(
+        return self.state.rl_engine.save_state(
             self.state.prev_state, 
             self.state.action, 
             self.state.shaped_reward, 
             self.state.curr_state)
-        return
+        

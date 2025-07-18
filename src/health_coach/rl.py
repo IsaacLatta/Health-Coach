@@ -133,5 +133,5 @@ class QLearningEngine(RLEngine):
             return out.json_dict["shaped_reward"]
 
     def save_state(self, prev: int, action: int, reward: float, cur: int):
-        self.q_table = rl_tools._update_q_table(self.q_state.q_table, prev, action, reward, cur)
-        return
+        # self.q_table = rl_tools._update_q_table(self.q_state.q_table, prev, action, reward, cur)
+        return action

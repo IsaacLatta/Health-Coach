@@ -4,8 +4,8 @@ import gym
 from gym import spaces
 from typing import Any, List, Dict
 
-from rl_data_gen.drift import simulate_drift, discretize_probability
-from rl_data_gen.generate import predict_proba
+from health_coach.rl_data_gen.drift import simulate_drift, discretize_probability
+from health_coach.rl_data_gen.generate import predict_proba
 
 ACTIONS = [
     "INCREASE_MODERATE_THRESHOLD",

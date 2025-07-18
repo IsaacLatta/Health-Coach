@@ -74,7 +74,7 @@ def update_rl_model(prev_state: int, action: int, reward: float, current_state: 
     return _update_rl_model(prev_state, action, reward, current_state)
 
 def _compute_reward(prev_state: int, current_state: int) -> float:
-    return float(prev_state - current_state)
+    return float(prev_state - current_state)*(-1)
 
 @tool
 def compute_reward(prev_state: int, current_state: int) -> float:
