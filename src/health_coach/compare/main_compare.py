@@ -4,7 +4,7 @@ import itertools
 import statistics
 from typing import List, Dict
 
-from health_coach.rl_data_gen.generate import extract_anchor_pairs, generate_episodes, load_model
+from health_coach.rl_data_gen.generate import get_episodes, extract_anchor_pairs, generate_episodes, load_model, split_anchors
 from health_coach.rl_train.env import HeartDiseaseEnv
 from health_coach.rl_train.offline_train import train_q_table, evaluate_policy as eval_offline
 from health_coach.rl import QLearningEngine
@@ -15,6 +15,8 @@ from health_coach.tools.rl_tools.action import (
 from health_coach.tools.rl_tools.context import get_all_tools as get_context_tools
 from health_coach.tools.rl_tools.reward import get_all_tools as get_reward_tools
 from health_coach.flows import RLFlow, RLInput
+
+from .env import AgentQLearningEnvironment
 
 TRAIN_FRAC = 0.8
 OFF_ALPHA = 0.1
@@ -51,7 +53,7 @@ def run_pure(train_eps, val_eps):
 
         return results
 
-def run_agent(train_eps, val_eps):
+def run_agent(train_episodes, val_episodes):
 
     results: List[Dict] = []
 
@@ -75,13 +77,13 @@ def run_agent(train_eps, val_eps):
 
             flow = RLFlow()
             flow.set_rl_implementation(engine)
+            env = AgentQLearningEnvironment(flow, ) 
 
-            for ep in train_eps:
-                flow.set_input(RLInput(**ep))
-                flow.kickoff()
+            for episode in train_episodes:
+                env.run_episode(episode[0]["prediction"], episode[len(episode[0]) - 1])
 
-            Q_agent = engine.q_state.q_table
-            score = eval_offline(Q_agent, val_eps)
+            Q_agent = env.q_table
+            score = eval_offline(Q_agent, val_episodes)
             scores.append(score)
 
         results.append({
@@ -95,19 +97,13 @@ def run_agent(train_eps, val_eps):
         return results
 
 def run_comparison() -> List[Dict]:
-    model = load_model()
-    anchors = extract_anchor_pairs()
-    episodes = generate_episodes(anchors, model)
+    episodes = get_episodes()
     random.shuffle(episodes)
-    split = int(len(episodes) * TRAIN_FRAC)
-    train_eps, val_eps = episodes[:split], episodes[split:]
-
+    split = int(len(episodes)*TRAIN_FRAC)
+    train_episodes, val_episodes = episodes[split:], episodes[split:]
     results: List[Dict] = []
 
-    pure_results = run_pure(train_eps, val_eps)
-    results.append(pure_results)
-
-    agent_results = run_agent(train_eps, val_eps)
+    agent_results = run_agent(train_episodes, val_episodes)
     results.append(agent_results)
 
     return results

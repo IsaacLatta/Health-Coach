@@ -64,12 +64,10 @@ class QLearningEngine(RLEngine):
         return list(range(7))
 
     def encode_prev_state(self, raw_input: Any) -> int:
-        return 0
+        return raw_input["previous_state"]
 
     def encode_curr_state(self, raw_input: Any) -> int:
-        # pred = _make_prediction(raw_input.patient_features)
-        # return rl_tools._discretize_probability(pred)
-        return 0
+        return raw_input["current_state"]
 
     def compute_env_reward(self, prev: int, cur: int) -> float:
         return rl_tools._compute_reward(prev, cur)

@@ -83,6 +83,7 @@ def prepare_output_dirs(base: Path = BASE_DIR/"data"/"synthetic") -> Tuple[Path,
     val.mkdir(parents=True, exist_ok=True)
     return train, val
 
+
 def generate_episodes(
     anchors: List[Tuple[Dict[str, Any], Dict[str, Any]]],
     model: Any,
@@ -113,3 +114,13 @@ def write_episodes(
         dest = train_dir if idx < cut else val_dir
         dest.joinpath(f"episode_{idx:03d}.csv").write_text(df.to_csv(index=False))
 
+def get_episodes():
+    model = load_model()
+    anchors = extract_anchor_pairs()
+    rand_anchors, trend_anchors = split_anchors(anchors)
+
+    episodes = []
+    episodes += generate_episodes(trend_anchors, model, mode="trend")
+    episodes += generate_episodes(rand_anchors, model, mode="random_walk")
+
+    return episodes
