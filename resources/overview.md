@@ -178,7 +178,7 @@ Health‑Coach/
 
 ## 5. Healthcare Reporting Integration
 
-Currently the reporting pipeline operates on a simple logistic regression model sourced from github. Once the final prototype is built, it may be wise to swap in a more mature model, perhaps the one Sham's has developed, or another. The RL and reporting flow is more or less independent of any specific prediction model, only the prediction, and explanatory tool's used be the agents would need to be refactored.
+Currently the reporting pipeline operates on a simple logistic regression model sourced from github. Once the final prototype is built, it may be wise to swap in a more mature model, perhaps the one Sham's has developed, or another. The RL and reporting flow is more or less independent of any specific prediction model, only the prediction, and explanatory tool's used by the agents would need to be refactored.
 
 ### 5.1 Reporting Pipeline
 
@@ -202,6 +202,37 @@ Currently the reporting pipeline operates on a simple logistic regression model 
 
   * Updated YAML written by the RL agent
   * Patient history CSV appended with `(State, Action, Reward, Next_State)`
+
+### RL + Reporting Agents
+
+* **DataLoaderAgent** (`data_input_agent`)
+  Responsible for reliably loading structured data (CSV, JSON, database) into the pipeline, validating schema and retrying on I/O errors.
+
+* **DataExportAgent** (`data_export_agent`)
+  Handles atomic, error‑tolerant persistence of structured outputs (reports, logs, Q‑tables) to disk or external stores.
+
+* **PolicyAgent** (`policy_agent`)
+  Acts as the RL policy oracle, selecting the next discrete action index based on the current encoded state.
+
+* **ContextProvidingAgent** (`context_providing_agent`)
+  Gathers and summarizes per‑step contextual information (visit counts, reward trends, Q‑table stats) into a concise JSON for downstream shaping.
+
+* **RewardShapingAgent** (`reward_shaping_agent`)
+  Inspects each transition’s raw reward and uses context tools (visitation counts, momentum, progress) to produce an augmented reward that accelerates learning.
+
+* **PredictionAgent** (`prediction_agent`)
+  Loads a trained model and, given patient features, computes the heart‑disease risk probability.
+
+* **ExplanationAgent** (`explanation_agent`)
+  Uses SHAP to generate a detailed HTML explanation of the model’s prediction, highlighting top feature contributions.
+
+* **ReportingAgent** (`reporting_agent`)
+  Fills an HTML medical‑report template with features, risk score, and explanation, then saves the report file to disk.
+
+**NOTE**: When the reporting system and rl system are merged into an application, some of these agents may be dropped. For example the _DataLoader_, _DataExporterAgent_, and _PredictionAgent_ do nothing more than call a function, might as well just call those functions directly. 
+
+
+![System Flow](diagrams/system_flow_dark.png)
 
 ---
 
