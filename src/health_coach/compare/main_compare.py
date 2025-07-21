@@ -20,7 +20,7 @@ from health_coach.tools.rl_tools.reward import get_all_tools as get_reward_tools
 from health_coach.tools.rl import _compute_reward
 from health_coach.flows import RLFlow
 
-from .env import AgentQLearningEnvironment, PureQLearningEnvironment, generate_base_trajectory
+from .env import AgentQLearningEnvironment, PureQLearningEnvironment, DriftOfflineEnvironment, generate_base_trajectory
 
 TRAIN_FRACTION = 0.8
 OFF_ALPHA = 0.1
@@ -28,6 +28,26 @@ OFF_GAMMA = 0.9
 EPSILON = 1.0
 EPS_DECAY = 0.1
 RUNS = 1
+
+DIVIDER = "\n************************\n"
+
+def evaluate_q_table(q_table: np.ndarray, episodes):
+    env = DriftOfflineEnvironment(
+        drift.discretize_probability, 
+        drift.action_to_noise,
+        _compute_reward)
+
+    returns = []
+    for episode in episodes:
+        state = env.reset(episode)
+        total_rewards = 0.0
+        done = False
+        while not done:
+            state, reward, done = env.step(int(np.argmax(q_table[state])))
+            total_rewards += reward
+        returns.append(total_rewards)
+
+    return statistics.mean(returns), statistics.stdev(returns)
 
 def run_pure(train_episodes, val_episodes):
 
@@ -40,17 +60,23 @@ def run_pure(train_episodes, val_episodes):
                 OFF_GAMMA,
                 OFF_ALPHA,
                 )
-        
-        for seed in range(RUNS):
-            q_table = np.zeros((10, 7), dtype=float)
-            env.reset(q_table)
-            
-            for episode in train_episodes:
-                p_start = episode[0]["prediction"]
-                p_end = episode[-1]["next_prediction"]
-                q_table = env.run_episode(p_start, p_end)
-        
-        print(f"Explorer strategy {explorer.__name__} QTable:\n{q_table}\n")            
+    
+        q_table = np.zeros((10, 7), dtype=float)
+        env.reset(q_table)
+        for episode in train_episodes:
+            p_start = episode[0]["prediction"]
+            p_end = episode[-1]["next_prediction"]
+            trajectory = generate_base_trajectory(p_start, p_end)
+            print(f"TRAJECTORY of Length({len(trajectory)})\n{trajectory}")
+
+            q_table = env.run_episode(p_start, p_end)
+    
+        mean, std = evaluate_q_table(q_table, val_episodes)
+        print(f"Explorer strategy {explorer.__name__} Results"
+              f"{DIVIDER}"
+              f"Mean={mean}, STD={std}"
+              f"\nQTable:\n{q_table}\n"            
+              f"{DIVIDER}\n")
 
 def run_agent(train_episodes, val_episodes):
     action_tools = get_action_tools()

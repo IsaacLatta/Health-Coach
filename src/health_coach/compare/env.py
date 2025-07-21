@@ -2,7 +2,7 @@ import random
 import numpy as np
 import gym
 from gym import spaces
-from typing import Any, List, Dict, Callable
+from typing import Any, List, Dict, Callable, Tuple
 from pydantic import BaseModel
 from crewai.flow.flow import Flow
 
@@ -31,7 +31,7 @@ def generate_base_trajectory(
         trajectory.append(p)
     return trajectory
 
-class AgentQLearningEnvironment(gym.Env):
+class AgentQLearningEnvironment:
     def __init__(
             self, 
             flow: RLFlow,
@@ -49,7 +49,7 @@ class AgentQLearningEnvironment(gym.Env):
         action = -1
         prev_state = self.state_mapper(trajectory[0])
         for prob in trajectory[1:]:
-            noisy_p = prob + self.action_to_noise_mapper(action) if action > 0 else 0 
+            noisy_p = prob + (self.action_to_noise_mapper(action) if action >= 0 else 0.0)
             state = self.state_mapper(noisy_p)
             action = self.apply_policy(prev_state, state)
             prev_state = state
@@ -71,7 +71,7 @@ class AgentQLearningEnvironment(gym.Env):
             return
         
 
-class PureQLearningEnvironment(gym.Env):
+class PureQLearningEnvironment:
 
     def __init__(
             self, 
@@ -99,8 +99,8 @@ class PureQLearningEnvironment(gym.Env):
             state = self.state_mapper(noisy_p)
             reward = self.reward_function(prev_state, state)
             action = self.exploration_strategy(prev_state)
-            prev_state = state
             self.update_q_table(prev_state, reward, action)
+            prev_state = state
 
         return self.q_table
 
@@ -111,5 +111,39 @@ class PureQLearningEnvironment(gym.Env):
 
     def reset(self, q_table: np.ndarray):
         self.q_table = q_table
+
+class DriftOfflineEnvironment:
+    def __init__(
+        self,
+        state_mapper: Callable[[float], int],
+        action_to_noise_mapper: Callable[[int], float],
+        reward_function: Callable[[int,int], float],
+    ):
+        self.state_mapper = state_mapper
+        self.action_to_noise_mapper = action_to_noise_mapper
+        self.reward_function = reward_function
+
+    def reset(self, episode: List[Dict]) -> int:
+        self.episode = episode
+        self.idx = 0
+        p0 = episode[0]["prediction"]
+        self.prev_state = self.state_mapper(p0)
+        return self.prev_state
+
+    def step(self, action: int) -> Tuple[int, float, bool]:
+        entry = self.episode[self.idx]
+        p_next = entry["next_prediction"]
+
+        noisy_p = p_next + (self.action_to_noise_mapper(action) if action >= 0 else 0.0)
+        noisy_p = float(np.clip(noisy_p, 0.0, 1.0))
+
+        next_state = self.state_mapper(noisy_p)
+        reward = self.reward_function(self.prev_state, next_state)
+
+        self.idx += 1
+        done = self.idx >= len(self.episode)
+        self.prev_state = next_state
+
+        return next_state, reward, done
 
     
