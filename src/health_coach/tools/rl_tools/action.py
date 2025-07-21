@@ -58,7 +58,7 @@ def epsilon_greedy(current_state: int, epsilon: float = 0.1) -> int:
     """
     return epsilon_greedy_fn(current_state, epsilon)
 
-def softmax_fn(current_state: int, temperature: float) -> int:
+def softmax_fn(current_state: int, temperature: float = 1.0) -> int:
     q_table = _get_q_table()
     s = retrieve_state_index(current_state)
     logits = q_table[s] / temperature
@@ -69,13 +69,13 @@ def softmax_fn(current_state: int, temperature: float) -> int:
 
 
 @tool
-def softmax(current_state: int, temperature: float) -> int:
+def softmax(current_state: int, temperature: float = 1.0) -> int:
     """
     Boltzmann exploration: sample action ∼ softmax(Q(s,·)/temperature).
     """
     return softmax_fn(current_state, temperature)
 
-def ucb_fn(current_state: int, c: float) -> int:
+def ucb_fn(current_state: int, c: float = 1.0) -> int:
     q_table = _get_q_table()
     s = retrieve_state_index(current_state)
     counts = _get_visit_counts()[s]
@@ -86,13 +86,13 @@ def ucb_fn(current_state: int, c: float) -> int:
 
 
 @tool
-def ucb(current_state: int, c: float) -> int:
+def ucb(current_state: int, c: float = 1.0) -> int:
     """
     Upper-Confidence Bound: argmax_a [Q(s,a) + c * sqrt(ln N(s)+1)/(N(s,a)+1)].
     """
     return ucb_fn(current_state, c)
 
-def count_bonus_fn(current_state: int, beta: float) -> int:
+def count_bonus_fn(current_state: int, beta: float = 1.0) -> int:
     q_table = _get_q_table()
     s = retrieve_state_index(current_state)
     counts = _get_visit_counts()[s]
@@ -101,7 +101,7 @@ def count_bonus_fn(current_state: int, beta: float) -> int:
     return int(np.argmax(scores))
 
 @tool
-def count_bonus(current_state: int, beta: float) -> int:
+def count_bonus(current_state: int, beta: float = 1.0) -> int:
     """
     Count-based bonus: argmax_a [Q(s,a) + beta / sqrt(N(s,a)+1)].
     """
@@ -123,11 +123,11 @@ def thompson(current_state: int) -> int:
     """
     return tompson_fn(current_state)
 
-def maxent_fn(current_state: int, alpha: float) -> int:
-    return softmax(current_state=current_state, temperature=alpha)
+def maxent_fn(current_state: int, alpha: float = 1.0) -> int:
+    return softmax_fn(current_state=current_state, temperature=alpha)
 
 @tool
-def maxent(current_state: int, alpha: float) -> int:
+def maxent(current_state: int, alpha: float = 1.0) -> int:
     """
     Maximum-Entropy policy: alias for softmax(state, temperature=alpha).
     """

@@ -313,14 +313,14 @@ Imagine an RL run where:
 2. **Mid‑Training**: after 100 episodes, the TrendingAgent observes **diminishing reward improvements**. It switches to **ε‑greedy** with ε=0.01 for stable exploitation.
 3. **Late Training**: VisitCountBonus is turned on to ensure corner‐case states (e.g. s=9) are still sampled at least once before termination.
 
-None of this would be possible with static schedules—agents inject **semantic**, **per‑step** adjustments based on both global and local context.
+None of this would be possible with static schedules, agents inject **semantic**, **per‑step** adjustments based on both global and local context.
 
 ---
 
 ### 6.6 Why Q‑Learning?
 
 * **Simplicity**: one tabular update rule, easy to inspect and debug.
-* **Transparency**: Q‑values clearly map state→action values, ideal for healthcare explainability.
+* **Transparency**: Q‑values clearly map state to action values, ideal for healthcare explainability.
 * **Extensibility**: we layer our agentic tools on top without changing the core algorithm, ensuring the baseline remains solid and interpretable.
 
 By combining Q‑learning’s clarity with agentic augmentation, we create an RL system that is both **robust** and **adaptable**, ready for real‑world healthcare reporting.

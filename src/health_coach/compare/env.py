@@ -69,3 +69,47 @@ class AgentQLearningEnvironment(gym.Env):
         
         except Exception as e:
             return
+        
+
+class PureQLearningEnvironment(gym.Env):
+
+    def __init__(
+            self, 
+            exploration_strategy: Callable[[np.ndarray], int],
+            state_mapper: Callable[[float], int],
+            action_to_noise_mapper: Callable[[int], float],
+            reward_function: Callable[[int, int], float],
+            gamma: float,
+            alpha: float):
+        self.exploration_strategy = exploration_strategy
+        self.state_mapper = state_mapper
+        self.action_to_noise_mapper = action_to_noise_mapper
+        self.reward_function = reward_function
+        self.gamma = gamma
+        self.alpha = alpha
+        self.q_table = np.zeros((10, 7), dtype=float)
+
+    def run_episode(self, p_start: float, p_end: float) -> np.ndarray:
+        trajectory = generate_base_trajectory(p_start, p_end)
+
+        action = -1
+        prev_state = self.state_mapper(trajectory[0])
+        for prob in trajectory[1:]:
+            noisy_p = prob + (self.action_to_noise_mapper(action) if action >= 0 else 0)
+            state = self.state_mapper(noisy_p)
+            reward = self.reward_function(prev_state, state)
+            action = self.exploration_strategy(prev_state)
+            prev_state = state
+            self.update_q_table(prev_state, reward, action)
+
+        return self.q_table
+
+    def update_q_table(self, state: int, reward: float, action: int):
+        best_next_state = self.q_table[state].max()
+        td_error = (reward + self.gamma * best_next_state) - self.q_table[state, action]
+        self.q_table[state, action] += self.alpha * td_error
+
+    def reset(self, q_table: np.ndarray):
+        self.q_table = q_table
+
+    
