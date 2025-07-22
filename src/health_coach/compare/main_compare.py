@@ -1,4 +1,10 @@
-# compare.py
+# TODO:
+#   Generate more episodes
+#   Generate more steps per episode
+#   Possibly add more state bins, pair with more aggressive trajectory
+#   Add another trend mode for data, piecewise might need a mid point
+#   Sweep alpha and gamma
+
 import random
 import itertools
 import statistics
@@ -79,15 +85,14 @@ def train_q_table(
         "mean_action_gap": mean_gap
     }
 
-def evaluate_metrics(q_table: np.ndarray, val_eps) -> Dict[str, Any]:
-    """Greedy‐replay held‐out episodes to compute:
-       - mean/std return
-       - mean/std regret
-       - mean/std capture fraction
-       - mean/std policy entropy
-       - eval visit_counts heatmap
-    """
-    
+def evaluate_metrics(
+        q_table: np.ndarray, 
+        val_eps, 
+        state_fn: Callable[[float], int] = drift.discretize_probability,
+        action_to_noise_fn: Callable[[int], float] = drift.action_to_noise,
+        reward_fn: Callable[[int, int], float] = _compute_reward
+        ) -> Dict[str, Any]:
+
     n_states, n_actions = q_table.shape
     eval_visits = np.zeros_like(q_table, dtype=int)
 
@@ -101,34 +106,23 @@ def evaluate_metrics(q_table: np.ndarray, val_eps) -> Dict[str, Any]:
         T = 0
 
         for step in ep:
-            # Greedy policy & entropy
-            probs = np.zeros(n_actions, dtype=float)
-            best_a = int(np.argmax(q_table[prev_state]))
-            probs[best_a] = 1.0
-            H_acc += -np.sum(probs * np.log(probs + 1e-12))
-
-            # replay transition
             p_next = step["next_prediction"]
-            # no noise at eval time
-            s_next = drift.discretize_probability(p_next)
-            r = _compute_reward(prev_state, s_next)
+            best_a = int(np.argmax(q_table[prev_state]))
 
-            # agent return
+            noisy_p = p_next + action_to_noise_fn(best_a)
+            noisy_p = np.clip(noisy_p, 0.0, 1.0)
+            s_next = state_fn(noisy_p)
+            r = reward_fn(prev_state, s_next)
             G_agent += r
 
-            # oracle return: pick action maximizing immediate reward
-            # (since future reward depends on subsequent states, this is
-            #  actually a one‐step regret metric)
             r_opts = []
             for a2 in range(n_actions):
-                noisy_p2 = p_next + drift.action_to_noise(a2)
-                s2 = drift.discretize_probability(np.clip(noisy_p2, 0.0, 1.0))
-                r_opts.append(_compute_reward(prev_state, s2))
+                noisy_p2 = p_next + action_to_noise_fn(a2)
+                s2 = state_fn(np.clip(noisy_p2, 0.0, 1.0))
+                r_opts.append(reward_fn(prev_state, s2))
             G_opt += max(r_opts)
 
-            # count visits
             eval_visits[prev_state, best_a] += 1
-
             prev_state = s_next
             T += 1
 
@@ -159,10 +153,10 @@ def run_pure(train_eps, val_eps):
         print(f"  Mean action‐gap: {train_metrics['mean_action_gap']:.3f}")
         print("  Visit counts:\n", train_metrics["visit_counts"])
         print("\n>>> Evaluation metrics:")
-        print(f"  Return    = {eval_metrics['mean_return']:.3f} ±{eval_metrics['std_return']:.3f}")
-        print(f"  Regret    = {eval_metrics['mean_regret']:.3f} ±{eval_metrics['std_regret']:.3f}")
-        print(f"  Capture % = {eval_metrics['mean_capture']:.3f} ±{eval_metrics['std_capture']:.3f}")
-        print(f"  Entropy   = {eval_metrics['mean_entropy']:.3f} ±{eval_metrics['std_entropy']:.3f}")
+        print(f"  Return    = {eval_metrics['mean_return']:.3f} ± {eval_metrics['std_return']:.3f}")
+        print(f"  Regret    = {eval_metrics['mean_regret']:.3f} ± {eval_metrics['std_regret']:.3f}")
+        print(f"  Capture % = {eval_metrics['mean_capture']:.3f} ± {eval_metrics['std_capture']:.3f}")
+        print(f"  Entropy   = {eval_metrics['mean_entropy']:.3f} ± {eval_metrics['std_entropy']:.3f}")
         print("  Eval visits:\n", eval_metrics["eval_visit_counts"])
 
 def run_agent(train_episodes, val_episodes):
