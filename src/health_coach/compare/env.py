@@ -88,6 +88,8 @@ class PureQLearningEnvironment:
         self.gamma = gamma
         self.alpha = alpha
         self.q_table = np.zeros((10, 7), dtype=float)
+        self.visit_counts = np.zeros((10, 7), dtype=float)
+
 
     def run_episode(self, p_start: float, p_end: float) -> np.ndarray:
         trajectory = generate_base_trajectory(p_start, p_end)
@@ -99,18 +101,21 @@ class PureQLearningEnvironment:
             state = self.state_mapper(noisy_p)
             reward = self.reward_function(prev_state, state)
             action = self.exploration_strategy(prev_state)
-            self.update_q_table(prev_state, reward, action)
+            self.visit_counts[prev_state, action] += 1
+
+            self.update_q_table(prev_state, reward, action, state)
             prev_state = state
 
         return self.q_table
 
-    def update_q_table(self, state: int, reward: float, action: int):
-        best_next_state = self.q_table[state].max()
-        td_error = (reward + self.gamma * best_next_state) - self.q_table[state, action]
-        self.q_table[state, action] += self.alpha * td_error
+    def update_q_table(self, prev_state: int, reward: float, action: int, next_state: int):
+        best_next = self.q_table[next_state].max()
+        td_error  = (reward + self.gamma * best_next) - self.q_table[prev_state, action]
+        self.q_table[prev_state, action] += self.alpha * td_error
 
     def reset(self, q_table: np.ndarray):
         self.q_table = q_table
+        self.visit_counts[:] = 0
 
 class DriftOfflineEnvironment:
     def __init__(
