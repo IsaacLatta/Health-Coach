@@ -4,7 +4,7 @@ import random
 from pathlib import Path
 from typing import Any, List, Tuple, Dict
 
-from health_coach.rl_data_gen.drift import simulate_drift
+from health_coach.rl_data_gen.drift import simulate_drift, simulate_drift_probs
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 _DATA_SET_PATH = BASE_DIR/"data"/"Heart_Disease_Prediction.csv"
@@ -21,26 +21,21 @@ def extract_anchor_pairs(
     label_column: str = "Heart Disease"
 ) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
     df = pd.read_csv(csv_path)
-
-    df[label_column] = df[label_column].map({
-        "Absence": 0,
-        "Presence": 1
-    })
-
+    df[label_column] = df[label_column].map({"Absence": 0, "Presence": 1})
     records = df.to_dict(orient="records")
     negs = [r for r in records if r[label_column] == 0]
     poss = [r for r in records if r[label_column] == 1]
-
     random.shuffle(negs)
     random.shuffle(poss)
-
     pairs: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
-
-    for n, p in zip(negs, poss):
-        pairs.append((n, p))
-    for p, n in zip(poss, negs):
-        pairs.append((p, n))
-
+    # All possible absence->presence trend anchors
+    for n in negs:
+        for p in poss:
+            pairs.append((n, p))
+    # All possible presence->absence trend anchors
+    for p in poss:
+        for n in negs:
+            pairs.append((p, n))
     return pairs
 
 def split_anchors(
@@ -83,7 +78,6 @@ def prepare_output_dirs(base: Path = BASE_DIR/"data"/"synthetic") -> Tuple[Path,
     val.mkdir(parents=True, exist_ok=True)
     return train, val
 
-
 def generate_episodes(
     anchors: List[Tuple[Dict[str, Any], Dict[str, Any]]],
     model: Any,
@@ -95,7 +89,7 @@ def generate_episodes(
     for r0, r1 in anchors:
         p0 = predict_proba(model, r0)
         p1 = predict_proba(model, r1)
-        traj = simulate_drift(p0, p1, seed=seed, mode=mode)
+        traj = simulate_drift_probs(p0, p1, seed=seed, mode=mode)
         eps.append(traj)
         seed += 1
     return eps
@@ -114,13 +108,26 @@ def write_episodes(
         dest = train_dir if idx < cut else val_dir
         dest.joinpath(f"episode_{idx:03d}.csv").write_text(df.to_csv(index=False))
 
-def get_episodes():
+def get_episodes(
+    num_trend: int,
+    num_random: int,
+    start_seed: int = 1000
+) -> List[List[Dict[str, Any]]]:
+    """
+    Select num_trend anchor pairs for trend mode and num_random pairs for random_walk mode,
+    generate the corresponding episodes, and return them in the same list-of-lists format.
+    """
     model = load_model()
     anchors = extract_anchor_pairs()
-    rand_anchors, trend_anchors = split_anchors(anchors)
-
+    total = len(anchors)
+    if num_trend + num_random > total:
+        raise ValueError(f"Requested {num_trend + num_random} episodes, "
+                         f"but only {total} anchors available.")
+    random.shuffle(anchors)
+    trend_anchors = anchors[:num_trend]
+    rand_anchors = anchors[num_trend:num_trend + num_random]
     episodes = []
-    episodes += generate_episodes(trend_anchors, model, mode="trend")
-    episodes += generate_episodes(rand_anchors, model, mode="random_walk")
-
+    episodes += generate_episodes(trend_anchors, model, mode="trend", start_seed=start_seed)
+    rand_start = start_seed + len(trend_anchors)
+    episodes += generate_episodes(rand_anchors, model, mode="random_walk", start_seed=rand_start)
     return episodes

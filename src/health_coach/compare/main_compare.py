@@ -13,12 +13,14 @@ from typing import List, Dict, Tuple, Callable, Any
 import numpy as np
 import health_coach.rl_data_gen.generate as gen
 from health_coach.rl_train.env import HeartDiseaseEnv
-from health_coach.rl_train.offline_train import train_q_table, evaluate_policy as eval_offline
+from health_coach.rl_train.offline_train import evaluate_policy as eval_offline
 from health_coach.rl import QLearningEngine
 from health_coach.tools.rl_tools.action import (
     get_all_tools as get_action_tools,
     get_all_tool_funcs as get_action_funcs
 )
+
+import health_coach.config as cfg
 
 import health_coach.rl_data_gen.drift as drift
 from health_coach.tools.rl_tools.context import get_all_tools as get_context_tools
@@ -56,7 +58,7 @@ def evaluate_q_table(q_table: np.ndarray, episodes):
     return statistics.mean(returns), statistics.stdev(returns)
 
 def train_q_table(
-    explorer_fn: Callable[[int], int],
+    explorer_fn: Callable[[int, np.ndarray], int],
     train_eps:   List[List[Dict[str, float]]]
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     env = PureQLearningEnvironment(
@@ -68,13 +70,12 @@ def train_q_table(
         alpha=OFF_ALPHA
     )
 
-    q_table = np.zeros((10,7), dtype=float)
+    q_table = np.zeros((cfg.Q_STATES, cfg.Q_ACTIONS), dtype=float)
     env.reset(q_table)
 
     for ep in train_eps:
-        p0 = ep[0]["prediction"]
-        pT = ep[-1]["next_prediction"]
-        q_table = env.run_episode(p0, pT)
+        q_table = env.run_episode(ep)
+        cfg.update_epsilon()
 
     top2 = np.partition(q_table, -2, axis=1)[:, -2:]
     gaps = top2[:,1] - top2[:,0]
@@ -99,14 +100,14 @@ def evaluate_metrics(
     returns, regrets, captures, entropies = [], [], [], []
 
     for ep in val_eps:
-        prev_state = drift.discretize_probability(ep[0]["prediction"])
+        prev_state = state_fn(ep[0])
         G_agent = 0.0
         G_opt = 0.0
         H_acc = 0.0
         T = 0
 
         for step in ep:
-            p_next = step["next_prediction"]
+            p_next = step
             best_a = int(np.argmax(q_table[prev_state]))
 
             noisy_p = p_next + action_to_noise_fn(best_a)
@@ -115,12 +116,9 @@ def evaluate_metrics(
             r = reward_fn(prev_state, s_next)
             G_agent += r
 
-            r_opts = []
-            for a2 in range(n_actions):
-                noisy_p2 = p_next + action_to_noise_fn(a2)
-                s2 = state_fn(np.clip(noisy_p2, 0.0, 1.0))
-                r_opts.append(reward_fn(prev_state, s2))
-            G_opt += max(r_opts)
+            s_true = state_fn(p_next)
+            r_true = reward_fn(prev_state, s_true)
+            G_opt += r_true
 
             eval_visits[prev_state, best_a] += 1
             prev_state = s_next
@@ -149,15 +147,14 @@ def run_pure(train_eps, val_eps):
         eval_metrics = evaluate_metrics(q_table, val_eps)
 
         print(f"\n=== Strategy: {explorer.__name__} ===")
-        print(">>> Training metrics:")
-        print(f"  Mean action‐gap: {train_metrics['mean_action_gap']:.3f}")
-        print("  Visit counts:\n", train_metrics["visit_counts"])
+        # print(">>> Training metrics:")
+        # print(f"  Mean action‐gap: {train_metrics['mean_action_gap']:.3f}")
+        # print("  Visit counts:\n", train_metrics["visit_counts"])
         print("\n>>> Evaluation metrics:")
-        print(f"  Return    = {eval_metrics['mean_return']:.3f} ± {eval_metrics['std_return']:.3f}")
+        # print(f"  Return    = {eval_metrics['mean_return']:.3f} ± {eval_metrics['std_return']:.3f}")
         print(f"  Regret    = {eval_metrics['mean_regret']:.3f} ± {eval_metrics['std_regret']:.3f}")
-        print(f"  Capture % = {eval_metrics['mean_capture']:.3f} ± {eval_metrics['std_capture']:.3f}")
-        print(f"  Entropy   = {eval_metrics['mean_entropy']:.3f} ± {eval_metrics['std_entropy']:.3f}")
-        print("  Eval visits:\n", eval_metrics["eval_visit_counts"])
+        # print(f"  Capture % = {eval_metrics['mean_capture']:.3f} ± {eval_metrics['std_capture']:.3f}")
+        # print("  Eval visits:\n", eval_metrics["eval_visit_counts"])
 
 def run_agent(train_episodes, val_episodes):
     action_tools = get_action_tools()
@@ -179,7 +176,7 @@ def run_agent(train_episodes, val_episodes):
         env = AgentQLearningEnvironment(flow, drift.discretize_probability, drift.action_to_noise)
 
         for seed in range(RUNS):
-            q_table = np.zeros((10, 7), dtype=float)
+            q_table = np.zeros((cfg.Q_STATES, cfg.Q_ACTIONS), dtype=float)
             env.reset(q_table)
 
             for episode in train_episodes:
@@ -191,9 +188,14 @@ def run_agent(train_episodes, val_episodes):
         return # this returns early, fine for now, just want to test it
 
 def run_comparison():
-    episodes = gen.get_episodes()
+    cfg.print_config()
+
+    num_trend = int(cfg.NUM_EPISODES * 2/3)
+    num_random = int(cfg.NUM_EPISODES * 1/3)
+    episodes = gen.get_episodes(num_trend=num_trend, num_random=num_random)
+    
     random.shuffle(episodes)
-    split = int(len(episodes)*TRAIN_FRACTION)
+    split = int(len(episodes)*cfg.TRAIN_FRACTION)
     train_eps, val_eps = episodes[:split], episodes[split:]
     print(f"Train eps: {len(train_eps)}, Val eps: {len(val_eps)}")
     run_pure(train_eps, val_eps)

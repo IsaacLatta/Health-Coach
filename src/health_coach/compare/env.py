@@ -9,6 +9,8 @@ from crewai.flow.flow import Flow
 from health_coach.flows import RLFlow
 from health_coach.rl_data_gen.drift import simulate_drift
 
+import health_coach.config as cfg
+
 def generate_base_trajectory(
     p_start: float,
     p_end:   float,
@@ -41,7 +43,7 @@ class AgentQLearningEnvironment:
         self.rl_flow = flow
         self.state_mapper = state_mapper
         self.action_to_noise_mapper = action_to_noise_mapper
-        self.q_table = np.zeros((10, 7), dtype=float)
+        self.q_table = np.zeros((cfg.Q_STATES, cfg.Q_ACTIONS), dtype=float)
 
     def run_episode(self, p_start: float, p_end: float) -> np.ndarray:
         trajectory = generate_base_trajectory(p_start, p_end)
@@ -72,10 +74,9 @@ class AgentQLearningEnvironment:
         
 
 class PureQLearningEnvironment:
-
     def __init__(
             self, 
-            exploration_strategy: Callable[[np.ndarray], int],
+            exploration_strategy: Callable[[int, np.ndarray], int],
             state_mapper: Callable[[float], int],
             action_to_noise_mapper: Callable[[int], float],
             reward_function: Callable[[int, int], float],
@@ -87,23 +88,24 @@ class PureQLearningEnvironment:
         self.reward_function = reward_function
         self.gamma = gamma
         self.alpha = alpha
-        self.q_table = np.zeros((10, 7), dtype=float)
-        self.visit_counts = np.zeros((10, 7), dtype=float)
+        self.q_table = np.zeros((cfg.Q_STATES, cfg.Q_ACTIONS), dtype=float)
+        self.visit_counts = np.zeros((cfg.Q_STATES, cfg.Q_ACTIONS), dtype=float)
 
-
-    def run_episode(self, p_start: float, p_end: float) -> np.ndarray:
-        trajectory = generate_base_trajectory(p_start, p_end)
-
+    def run_episode(self, probs: List[float]) -> np.ndarray:
         action = -1
-        prev_state = self.state_mapper(trajectory[0])
-        for prob in trajectory[1:]:
-            noisy_p = prob + (self.action_to_noise_mapper(action) if action >= 0 else 0)
-            state = self.state_mapper(noisy_p)
-            reward = self.reward_function(prev_state, state)
-            action = self.exploration_strategy(prev_state)
-            self.visit_counts[prev_state, action] += 1
+        prev_state = self.state_mapper(probs[0])
 
+        for p in probs[1:]:
+            noisy_p = p + (self.action_to_noise_mapper(action) if action >= 0 else 0.0)
+            noisy_p = float(np.clip(noisy_p, 0.0, 1.0))
+
+            state  = self.state_mapper(noisy_p)
+            reward = self.reward_function(prev_state, state)
+
+            action = self.exploration_strategy(prev_state, self.q_table)
+            self.visit_counts[prev_state, action] += 1
             self.update_q_table(prev_state, reward, action, state)
+
             prev_state = state
 
         return self.q_table
@@ -128,16 +130,15 @@ class DriftOfflineEnvironment:
         self.action_to_noise_mapper = action_to_noise_mapper
         self.reward_function = reward_function
 
-    def reset(self, episode: List[Dict]) -> int:
+    def reset(self, episode: List[float]) -> int:
         self.episode = episode
         self.idx = 0
-        p0 = episode[0]["prediction"]
+        p0 = episode[0]
         self.prev_state = self.state_mapper(p0)
         return self.prev_state
 
     def step(self, action: int) -> Tuple[int, float, bool]:
-        entry = self.episode[self.idx]
-        p_next = entry["next_prediction"]
+        p_next = self.episode[self.idx]
 
         noisy_p = p_next + (self.action_to_noise_mapper(action) if action >= 0 else 0.0)
         noisy_p = float(np.clip(noisy_p, 0.0, 1.0))
