@@ -127,7 +127,7 @@ def get_episodes(
     trend_anchors = anchors[:num_trend]
     rand_anchors = anchors[num_trend:num_trend + num_random]
     episodes = []
-    episodes += generate_episodes(trend_anchors, model, mode="trend", start_seed=start_seed)
+    # episodes += generate_episodes(trend_anchors, model, mode="trend", start_seed=start_seed)
     rand_start = start_seed + len(trend_anchors)
     episodes += generate_episodes(rand_anchors, model, mode="random_walk", start_seed=rand_start)
     return episodes

@@ -1,7 +1,4 @@
 # TODO:
-#   Generate more episodes
-#   Generate more steps per episode
-#   Possibly add more state bins, pair with more aggressive trajectory
 #   Add another trend mode for data, piecewise might need a mid point
 #   Sweep alpha and gamma
 
@@ -41,11 +38,16 @@ RUNS = 1
 
 DIVIDER = "\n************************\n"
 
+def reward_function(prev_state: int, current_state: int) -> float:
+    res = prev_state - current_state
+    # print(f"got prev={prev_state}, cur={current_state},  returning reward={res}\n")
+    return res
+
 def evaluate_q_table(q_table: np.ndarray, episodes):
     env = DriftOfflineEnvironment(
         drift.discretize_probability, 
         drift.action_to_noise,
-        _compute_reward)
+        reward_function)
 
     returns = []
     for episode in episodes:
@@ -67,7 +69,7 @@ def train_q_table(
         exploration_strategy=explorer_fn,
         state_mapper=drift.discretize_probability,
         action_to_noise_mapper=drift.action_to_noise,
-        reward_function=_compute_reward,
+        reward_function=reward_function,
         gamma=OFF_GAMMA,
         alpha=OFF_ALPHA
     )
@@ -93,7 +95,7 @@ def evaluate_metrics(
         val_eps, 
         state_fn: Callable[[float], int] = drift.discretize_probability,
         action_to_noise_fn: Callable[[int], float] = drift.action_to_noise,
-        reward_fn: Callable[[int, int], float] = _compute_reward
+        reward_fn: Callable[[int, int], float] = reward_function
         ) -> Dict[str, Any]:
 
     n_states, n_actions = q_table.shape
@@ -102,12 +104,12 @@ def evaluate_metrics(
     returns, regrets, captures, entropies = [], [], [], []
 
     for ep in val_eps:
-        prev_state = state_fn(ep[0])
         G_agent = 0.0
         G_opt = 0.0
         H_acc = 0.0
         T = 0
 
+        prev_state = state_fn(ep[0])
         for step in ep:
             p_next = step
             best_a = int(np.argmax(q_table[prev_state]))
@@ -117,6 +119,8 @@ def evaluate_metrics(
             s_next = state_fn(noisy_p)
             r = reward_fn(prev_state, s_next)
             G_agent += r
+
+            print(f"Next Prob: raw={p_next}, noisy_p={noisy_p}, for prev_state={prev_state}, next_state={s_next}\n")
 
             s_true = state_fn(p_next)
             r_true = reward_fn(prev_state, s_true)

@@ -22,7 +22,9 @@ def action_to_noise(action: int, gaussian_std: float = None) -> float:
         gaussian_std = NOISE_STD
     
     half_sample = abs(np.random.normal(loc=0.0, scale=gaussian_std))
-    return  half_sample if (action % 2 == 0) else -half_sample
+    res = -half_sample if (action % 2 == 0) else half_sample
+    print(f"Got noise={res} for action={action}")
+    return res
 
 def generate_trend_step(
     t: int,

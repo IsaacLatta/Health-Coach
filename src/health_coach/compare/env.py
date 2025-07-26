@@ -115,8 +115,7 @@ class PureQLearningEnvironment:
 
     def update_q_table(self, prev_state: int, reward: float, action: int, next_state: int):
         best_next = self.q_table[next_state].max()
-        td_error  = (reward + self.gamma * best_next) - self.q_table[prev_state, action]
-        self.q_table[prev_state, action] += self.alpha * td_error
+        self.q_table[prev_state, action]  = self.alpha * (reward + self.gamma * best_next) + (1 - self.alpha)*self.q_table[prev_state, action]
 
     def reset(self, q_table: np.ndarray):
         self.q_table = q_table
