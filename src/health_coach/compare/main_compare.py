@@ -22,6 +22,8 @@ from health_coach.tools.rl_tools.action import (
 
 import health_coach.config as cfg
 
+import health_coach.compare.oracle as oracle
+
 import health_coach.rl_data_gen.drift as drift
 from health_coach.tools.rl_tools.context import get_all_tools as get_context_tools
 from health_coach.tools.rl_tools.reward import get_all_tools as get_reward_tools
@@ -141,6 +143,9 @@ def evaluate_metrics(
         "eval_visit_counts": eval_visits
     }
 
+def mock_explorer(state: int, q_table: np.ndarray):
+    return 2
+
 def run_pure(train_eps, val_eps):
     for explorer in get_action_funcs():
         q_table, train_metrics = train_q_table(explorer, train_eps)
@@ -189,13 +194,21 @@ def run_agent(train_episodes, val_episodes):
 
 def run_comparison():
     cfg.print_config()
-
+    
     num_trend = int(cfg.NUM_EPISODES * 2/3)
     num_random = int(cfg.NUM_EPISODES * 1/3)
     episodes = gen.get_episodes(num_trend=num_trend, num_random=num_random)
-    
+
     random.shuffle(episodes)
     split = int(len(episodes)*cfg.TRAIN_FRACTION)
     train_eps, val_eps = episodes[:split], episodes[split:]
     print(f"Train eps: {len(train_eps)}, Val eps: {len(val_eps)}")
+
+    # noise_factors = [0.02, 0.05, 0.08, 0.1, 0.2, 0.5]
+    # bin_counts    = [11, 10, 20, 30, 50]
+    # results1 = oracle.sweep_oracle(noise_factors, bin_counts, cfg.EPISODE_LENGTH, train_eps, val_eps)
+    # always_two = lambda env: (lambda state, Q: 2)
+    # results2 = oracle.sweep_oracle(noise_factors, bin_counts, cfg.EPISODE_LENGTH, train_eps, val_eps, always_two)
+    # oracle.print_oracle_sweep_results(results1)
+    # oracle.print_oracle_sweep_results(results2)
     run_pure(train_eps, val_eps)

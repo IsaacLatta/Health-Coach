@@ -96,7 +96,10 @@ class PureQLearningEnvironment:
         prev_state = self.state_mapper(probs[0])
 
         for p in probs[1:]:
-            noisy_p = p + (self.action_to_noise_mapper(action) if action >= 0 else 0.0)
+            noise = (self.action_to_noise_mapper(action) if action >= 0 else 0.0)
+            # print(f"Got noise: {noise}\n")
+            noisy_p = p + noise
+            
             noisy_p = float(np.clip(noisy_p, 0.0, 1.0))
 
             state  = self.state_mapper(noisy_p)

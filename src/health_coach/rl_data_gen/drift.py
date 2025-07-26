@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from typing import List, Dict, Any, Optional, Tuple
-from health_coach.config import Q_STATES
+from health_coach.config import Q_STATES, NOISE_STD, EPISODE_LENGTH
 
 ACTIONS = [
     "INCREASE_MODERATE_THRESHOLD",
@@ -17,10 +17,12 @@ def discretize_probability(p: float) -> int:
     idx = int(p * Q_STATES)
     return min(max(idx, 0), Q_STATES - 1)
 
-def action_to_noise(action: int, gaussian_std: float = 0.1*(1 / (Q_STATES))) -> float:
-    M: float = 1
-    noise: int = np.random.normal(0, gaussian_std)
-    return noise if action % 2 == 0 else noise*(-1)
+def action_to_noise(action: int, gaussian_std: float = None) -> float:
+    if gaussian_std is None:
+        gaussian_std = NOISE_STD
+    
+    half_sample = abs(np.random.normal(loc=0.0, scale=gaussian_std))
+    return  half_sample if (action % 2 == 0) else -half_sample
 
 def generate_trend_step(
     t: int,
@@ -95,7 +97,7 @@ def generate_random_walk_step(p_base: float, delta_max: float) -> Tuple[Dict[str
 def simulate_drift_probs(
     p_start: float,
     p_end:   float,
-    length: Optional[int] = None,
+    length: Optional[int] = EPISODE_LENGTH,
     *,
     min_steps:   int = 20,
     max_steps:   int = 50,
@@ -105,7 +107,6 @@ def simulate_drift_probs(
     seed:         Optional[int] = None,
     mode:         str = "trend"
 ) -> List[float]:
-    # first generate the full dict‐based trajectory
     dict_traj = simulate_drift(
         p_start, p_end, length,
         min_steps=min_steps,
@@ -116,9 +117,7 @@ def simulate_drift_probs(
         seed=seed,
         mode=mode
     )
-    # pull out the raw “prediction” floats
     probs = [step["prediction"] for step in dict_traj]
-    # if you want the final point too:
     probs.append(dict_traj[-1]["next_prediction"])
     return probs
 

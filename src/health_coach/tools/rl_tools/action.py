@@ -150,5 +150,5 @@ def get_all_tool_funcs():
     """
     Return all exploration tools implementations.
     """
-    return [epsilon_greedy_fn]
+    return [epsilon_greedy_fn, softmax_fn]
     return [epsilon_greedy_fn, softmax_fn, ucb_fn, count_bonus_fn, thompson_fn, maxent_fn]
