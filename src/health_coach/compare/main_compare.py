@@ -41,7 +41,9 @@ PURE_OUTPUT_CSV = "pure_results.csv"
 
 def train_q_table(
     explorer_fn: Callable[[int, np.ndarray], int],
-    train_eps:   List[List[Dict[str, float]]]
+    train_eps:   List[List[Dict[str, float]]],
+    alpha: float,
+    gamma: float,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     
     env = PureQLearningEnvironment(
@@ -49,8 +51,8 @@ def train_q_table(
         state_mapper=drift.discretize_probability,
         action_to_noise_mapper=drift.action_to_noise,
         reward_function=reward_function,
-        gamma=OFF_GAMMA,
-        alpha=OFF_ALPHA
+        gamma=gamma,
+        alpha=alpha
     )
 
     q_table = np.zeros((cfg.Q_STATES, cfg.Q_ACTIONS), dtype=float)
@@ -71,26 +73,51 @@ def train_q_table(
 
 def run_pure(train_eps: List[List[float]], val_eps: List[List[float]],
              seeds: List[int] = SEEDS, output_path: str = PURE_OUTPUT_CSV) -> None:
-    results: List[Dict[str, Any]] = []
+    all_results: List[Dict[str, Any]] = []
     explorers = get_action_funcs()
 
     for explorer in explorers:
-        for seed in seeds:
-            random.seed(seed)
-            np.random.seed(seed)
+        
+        best_score = -float("inf")
+        best_hyperparams = (None, None)
+        for _ in range(cfg.N_TRIALS):
+            alpha, gamma = cfg.sample_hyperparams()
 
-            q_table, train_metrics = train_q_table(explorer, train_eps)
-            eval_metrics = evaluate_metrics(q_table, val_eps)
+            trial_scores = []
+            for seed in range(cfg.N_SEEDS):
+                random.seed(seed)
+                np.random.seed(seed)
 
-            metrics = {
-                "strategy": explorer.__name__,
-                "seed": seed,
-                **eval_metrics
-            }
-            results.append(metrics)
+                q_table, train_metrics = train_q_table(explorer, train_eps,  alpha, gamma)
+                eval_metrics = evaluate_metrics(q_table, val_eps)
 
-        print_results(results, explorer.__name__)
-    
+                metrics = {
+                    "strategy": explorer.__name__,
+                    "seed": seed,
+                    "alpha": alpha,
+                    "gamma": gamma,
+                    **eval_metrics
+                }
+                all_results.append(metrics)
+                trial_scores.append(eval_metrics["mean_normalized_capture_ratio"])
+
+            mean_score = sum(trial_scores) / len(trial_scores)
+            if mean_score > best_score:
+                best_score = mean_score
+                best_hyperparams = (alpha, gamma)
+
+        a_best, g_best = best_hyperparams
+        print(f"\nExplorer {explorer.__name__} best hyperparams:")
+        print(f"  alpha = {a_best:.4f}, gamma = {g_best:.4f} → score = {best_score:.4f}\n")
+
+        best_runs = [
+            r for r in all_results
+            if r["strategy"] == explorer.__name__
+            and r["alpha"]    == a_best
+            and r["gamma"]    == g_best
+        ]
+        print_results(best_runs, explorer.__name__)
+        
 def run_comparison():
     cfg.print_config()
 

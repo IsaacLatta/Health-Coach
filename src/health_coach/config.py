@@ -1,3 +1,5 @@
+import random
+
 Q_STATES: int = 30
 Q_ACTIONS: int = 7
 
@@ -9,6 +11,11 @@ EPISODE_LENGTH = 100
 TRAIN_FRACTION: float = 0.8
 EVAL_FRACTION: float = 0.2
 
+ALPHA_RANGE: float = (0.01, 1.0)
+GAMMA_RANGE: float = (0.90, 1.0)
+N_TRIALS = 10
+N_SEEDS = 3
+
 EPSILON_START: float = 1.0
 EPSILON_END: float = 0.01
 EPSILON_DECAY_RATE: float = (EPSILON_END / EPSILON_START) ** (1.0 / (TRAIN_FRACTION * NUM_EPISODES - 1))
@@ -18,6 +25,9 @@ EPSILON_CURRENT: float = EPSILON_START
 def update_epsilon() -> None:
     global EPSILON_CURRENT
     EPSILON_CURRENT = max(EPSILON_END, EPSILON_CURRENT * EPSILON_DECAY_RATE)
+
+def sample_hyperparams():
+    return (random.uniform(*ALPHA_RANGE), random.uniform(*GAMMA_RANGE))
 
 def print_config() -> None:
     print("=== Configuration for RL Comparison ===\n"
