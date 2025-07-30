@@ -51,24 +51,6 @@ def print_results(results: List[Dict[str, Any]], explorer_name: str) -> None:
         print(f"  {label}: {mean_val:.4f} ± {std_val:.4f}")
     print()
 
-def evaluate_q_table(q_table: np.ndarray, episodes):
-    env = DriftOfflineEnvironment(
-        drift.discretize_probability, 
-        drift.action_to_noise,
-        reward_function)
-
-    returns = []
-    for episode in episodes:
-        state = env.reset(episode)
-        total_rewards = 0.0
-        done = False
-        while not done:
-            state, reward, done = env.step(int(np.argmax(q_table[state])))
-            total_rewards += reward
-        returns.append(total_rewards)
-
-    return statistics.mean(returns), statistics.stdev(returns)
-
 
 def evaluate_metrics(
     q_table: np.ndarray,

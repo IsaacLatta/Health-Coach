@@ -11,6 +11,9 @@ EPISODE_LENGTH = 100
 TRAIN_FRACTION: float = 0.8
 EVAL_FRACTION: float = 0.2
 
+ALPHA: float = 0.5
+GAMMA: float = 0.5
+
 ALPHA_RANGE: float = (0.01, 1.0)
 GAMMA_RANGE: float = (0.90, 1.0)
 N_TRIALS = 10
