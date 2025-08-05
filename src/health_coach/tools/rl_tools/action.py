@@ -46,13 +46,13 @@ def _get_visit_counts(q_table: np.ndarray) -> np.ndarray:
             counts[s, a] += 1
     return counts
 
-def _get_q_posterior(q_table: np.ndarray, default_std: float = 1.0) -> np.ndarray:
+def _get_q_posterior(q_table: np.ndarray, sigma: float = cfg.THOMPSON_SIGMA) -> np.ndarray:
     """
     Build a synthetic posterior over Q-values: mean=Q, std=default_std.
     Returns shape [num_states, num_actions, 2] array.
     """
     means = q_table
-    stds = np.full_like(q_table, default_std, dtype=float)
+    stds = np.full_like(q_table, sigma, dtype=float)
     return np.stack([means, stds], axis=-1)
 
 def epsilon_greedy_fn(current_state: int, q_table: np.ndarray, epsilon: float = None) -> int:
@@ -70,7 +70,7 @@ def epsilon_greedy(current_state: int, epsilon: float = None) -> int:
     """
     return epsilon_greedy_fn(current_state, q_table=get_q_table(), epsilon=epsilon)
 
-def softmax_fn(current_state: int, q_table: np.ndarray, temperature: float = 1.0) -> int:
+def softmax_fn(current_state: int, q_table: np.ndarray, temperature: float = cfg.SOFTMAX_TEMP) -> int:
     s = retrieve_state_index(current_state)
     logits = q_table[s] / temperature
     logits = logits - np.max(logits)
@@ -79,13 +79,13 @@ def softmax_fn(current_state: int, q_table: np.ndarray, temperature: float = 1.0
     return int(np.random.choice(len(probs), p=probs))
 
 @tool
-def softmax(current_state: int, temperature: float = 1.0) -> int:
+def softmax(current_state: int, temperature: float = cfg.SOFTMAX_TEMP) -> int:
     """
     Boltzmann exploration: sample action ∼ softmax(Q(s,·)/temperature).
     """
     return softmax_fn(current_state, q_table=get_q_table(), temperature=temperature)
 
-def ucb_fn(current_state: int, q_table: np.ndarray, c: float = 1.0) -> int:
+def ucb_fn(current_state: int, q_table: np.ndarray, c: float = cfg.UCB_C) -> int:
     s = retrieve_state_index(current_state)
     counts = _get_visit_counts(q_table=q_table)[s]
     total = float(np.sum(counts))
@@ -94,7 +94,7 @@ def ucb_fn(current_state: int, q_table: np.ndarray, c: float = 1.0) -> int:
     return int(np.argmax(scores))
 
 @tool
-def ucb(current_state: int, c: float = 1.0) -> int:
+def ucb(current_state: int, c: float = cfg.UCB_C) -> int:
     """
     Upper-Confidence Bound: argmax_a [Q(s,a) + c * sqrt(ln N(s)+1)/(N(s,a)+1)].
     """
@@ -114,9 +114,9 @@ def count_bonus(current_state: int, beta: float = 1.0) -> int:
     """
     return count_bonus_fn(current_state, q_table=get_q_table(), beta=beta)
 
-def thompson_fn(current_state: int, q_table: np.ndarray) -> int:
+def thompson_fn(current_state: int, q_table: np.ndarray, sigma: float = cfg.THOMPSON_SIGMA) -> int:
     s = retrieve_state_index(current_state)
-    posterior = _get_q_posterior(q_table=q_table)
+    posterior = _get_q_posterior(q_table=q_table, sigma=sigma)
     means = posterior[s, :, 0]
     stds  = posterior[s, :, 1]
     samples = np.random.normal(loc=means, scale=stds)
@@ -128,13 +128,13 @@ def thompson(current_state: int) -> int:
     Thompson Sampling: sample Q~N(mean,std) and pick argmax.
     Uses a synthetic posterior with default std.
     """
-    return thompson_fn(current_state, q_table=get_q_table())
+    return thompson_fn(current_state, q_table=get_q_table(), sigma=cfg.THOMPSON_SIGMA)
 
-def maxent_fn(current_state: int, q_table: np.ndarray, alpha: float = 1.0) -> int:
+def maxent_fn(current_state: int, q_table: np.ndarray, alpha: float = cfg.MAXENT_ALPHA) -> int:
     return softmax_fn(current_state=current_state, q_table=q_table, temperature=alpha)
 
 @tool
-def maxent(current_state: int, alpha: float = 1.0) -> int:
+def maxent(current_state: int, alpha: float = cfg.MAXENT_ALPHA) -> int:
     """
     Maximum-Entropy policy: alias for softmax(state, temperature=alpha).
     """
@@ -150,5 +150,5 @@ def get_all_tool_funcs():
     """
     Return all exploration tools implementations.
     """
-    return [epsilon_greedy_fn]
+    return [epsilon_greedy_fn, softmax_fn, ucb_fn] # for hyperparam tuning
     # return [epsilon_greedy_fn, softmax_fn, ucb_fn, count_bonus_fn, thompson_fn, maxent_fn]

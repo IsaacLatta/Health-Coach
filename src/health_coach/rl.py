@@ -1,9 +1,10 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Callable
 from pydantic import BaseModel
 import numpy as np
 from crewai import Crew, Process
 from crewai.tools import BaseTool
 
+from threading import Lock
 from abc import ABC, abstractmethod
 
 import health_coach.tools.data as data_tools
@@ -11,6 +12,8 @@ import health_coach.tools.rl as rl_tools
 from health_coach.tools.prediction import _make_prediction
 import health_coach.tasks as tasks
 import health_coach.agents as agents
+import health_coach.config as cfg
+
 
 class QLearningState(BaseModel):
     class Config:
@@ -22,12 +25,12 @@ class RLEngine(ABC):
     @abstractmethod
     def possible_actions(self) -> List[int]:
         ...
-    @abstractmethod
-    def encode_prev_state(self, raw_input: Any) -> int:
-        ...
-    @abstractmethod
-    def encode_curr_state(self, raw_input: Any) -> int:
-        ...
+    # @abstractmethod
+    # def encode_prev_state(self, raw_input: Any) -> int:
+    #     ...
+    # @abstractmethod
+    # def encode_curr_state(self, raw_input: Any) -> int:
+    #     ...
     @abstractmethod
     def compute_env_reward(self, prev: int, cur: int) -> float:
         ...
@@ -43,6 +46,60 @@ class RLEngine(ABC):
     @abstractmethod
     def save_state(self, prev: int, action: int, reward: float, cur: int):
         ...
+
+class SimpleQLearningEngine(RLEngine):
+    def __init__(
+            self, 
+            exploration_tools: List[Any], 
+            reward_fn: Callable[[int, int], float],
+            alpha: float, 
+            gamma: float
+        ):
+        self.q_table = np.zeros((cfg.Q_STATES, cfg.Q_ACTIONS), dtype=float)
+        self.exploration_tools = exploration_tools
+        self.reward_fn = reward_fn
+        self.alpha = alpha
+        self.gamma = gamma
+        # self.lock = Lock()
+        self.verbose = True
+
+    def compute_env_reward(self, prev: int, curr: int):
+        return self.reward_fn(prev, curr)
+
+    def possible_actions(self) -> List[int]:
+        return list(range(cfg.Q_ACTIONS))
+
+    def generate_context(self, prev, cur, reward) -> str:
+        return "Unavailable"
+
+    def shape_action(self, prev_state: int, current_state: int, reward: float, context: str) -> int:
+        return 0
+        inputs = {
+            "previous_state":   prev_state,
+            "current_state":    current_state,
+            "pure_reward":      reward,
+            "context":          context,
+            "possible_actions": self.possible_actions(),
+        }
+
+        agent = agents.RewardShapingAgent().create(max_iter=1, verbose=True)
+        action_t = tasks.ShapeAction().create(agent, tools=self.exploration_tools)
+        crew = Crew(
+            agents=[agent],
+            tasks=[action_t],
+            process=Process.sequential,
+            verbose=self.verbose,
+        )
+        json_result = crew.kickoff(inputs=inputs).json_dict
+        return json_result["action"]
+
+    def shape_reward(self, prev, cur, reward, context):
+        return reward
+    
+    def save_state(self, prev, action, reward, cur):
+        # with self.lock:
+        best_next = self.q_table[cur].max()
+        self.q_table[prev, action] = self.alpha * (reward + self.gamma * best_next) + (1 - self.alpha)*self.q_table[prev, action]
 
 class QLearningEngine(RLEngine):
     def __init__(

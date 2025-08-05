@@ -14,7 +14,7 @@ class RLState(BaseModel):
     curr_state: int = 0
     env_reward: float = 0.0
     context: str = ""
-    action: int = 0
+    action: int = 1
     shaped_reward: float = 0.0
     input: Any = None
 
@@ -23,25 +23,13 @@ class RLFlow(Flow[RLState]):
     def set_rl_engine(self, engine: RLEngine):
         self.state.rl_engine = engine
 
-    def set_input(self, input: Any):
-        self.state.input = input
+    def set_state(self, previous_state, current_state):
+        self.state.prev_state = previous_state
+        self.state.curr_state = current_state
 
     @start()
-    def encode_previous_state(self):
-        self.state.prev_state = self.state.rl_engine.encode_prev_state(self.state.input)
-        return
-
-    @listen(encode_previous_state)
-    def encode_state(self):
-        eng = self.state.rl_engine
-        self.state.curr_state = eng.encode_curr_state(self.state.input)
-        return
-
-    @listen(encode_state)
     def compute_reward(self):
-        eng = self.state.rl_engine
-        self.state.env_reward = eng.compute_env_reward(self.state.prev_state, self.state.curr_state)
-        return
+        self.state.env_reward = self.state.rl_engine.compute_env_reward(self.state.prev_state, self.state.curr_state)
 
     @listen(compute_reward)
     def make_context(self):
@@ -51,7 +39,6 @@ class RLFlow(Flow[RLState]):
             self.state.curr_state,
             self.state.env_reward
         )
-        return
 
     @listen(make_context)
     def shape_action(self):
@@ -62,8 +49,6 @@ class RLFlow(Flow[RLState]):
             self.state.env_reward,
             self.state.context
         )
-        print(f"Shaped action {self.state.action}")
-        return
 
     @listen(make_context)
     def shape_reward(self):
@@ -73,13 +58,33 @@ class RLFlow(Flow[RLState]):
             self.state.env_reward,
             self.state.context
         )
-        return
     
     @listen(and_(shape_reward, shape_action))
     def update_model(self):
-        return self.state.rl_engine.save_state(
+        self.state.rl_engine.save_state(
             self.state.prev_state, 
             self.state.action, 
             self.state.shaped_reward, 
             self.state.curr_state)
         
+        return self.state.action
+    
+class ExampleState(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+    rl_engine: Optional[RLEngine] = None
+    counter: int = 0
+    message: str = ""
+
+class StateExampleFlow(Flow[ExampleState]):
+
+    @start()
+    def first_method(self):
+        self.state.message = "Hello from first_method"
+        self.state.counter += 1
+
+    @listen(first_method)
+    def second_method(self):
+        self.state.message += " - updated by second_method"
+        self.state.counter += 1
+        return 1234

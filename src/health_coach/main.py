@@ -4,7 +4,6 @@ import warnings
 import json
 
 # from health_coach.crew import make_health_coach
-import health_coach.flows as my_flows
 
 from datetime import datetime
 
@@ -22,18 +21,13 @@ def run():
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
 
-def train():
-    print("Not implemented.")
-    return
-    # inputs = {
-    #     "topic": "AI LLMs",
-    #     'current_year': str(datetime.now().year)
-    # }
-    # try:
-    #     HealthCoach().crew().train(n_iterations=int(sys.argv[1]), filename=sys.argv[2], inputs=inputs)
+from health_coach.compare.main_compare import run_agent
 
-    # except Exception as e:
-    #     raise Exception(f"An error occurred while training the crew: {e}")
+def train():
+    run_agent()
+
+    return
+    
 
 def replay():
     print("Not implemented.")
@@ -53,12 +47,38 @@ from crewai.utilities.paths import db_storage_path
 from pathlib import Path
 
 from health_coach.rl import  QLearningEngine
-from health_coach.flows import RLFlow
+from health_coach.flows import RLFlow, StateExampleFlow 
 
-from health_coach.compare.main_compare import run_comparison
+from health_coach.compare.main_compare import run_pure
+
+import health_coach.config as cfg
+from health_coach.rl import SimpleQLearningEngine
+from health_coach.compare.train import reward_function
+from health_coach.tools.rl_tools.action import get_all_tools
 
 def test():
-    run_comparison()
+    engine = SimpleQLearningEngine(
+        get_all_tools, 
+        reward_function, 
+        cfg.ALPHA, 
+        cfg.GAMMA
+    )
+
+    flow = RLFlow()
+    flow.set_rl_engine(engine)
+    flow.set_state(1, 2)
+    res = flow.kickoff()
+    print(f"Got {res}, state: {flow.state}")
+
+    # flow = StateExampleFlow()
+    # # flow.plot("my_flow_plot")
+    # final_output = flow.kickoff()
+    # print(f"Final Output: {final_output}")
+    # print("Final State:")
+    # print(flow.state)
+
+
+    # run_comparison()
     # flow = RLFlow()
     
     # flow.set_input(RLInput(
@@ -77,8 +97,6 @@ def test():
 
 
     # result = flow.kickoff()
-
+    return
 
     
-if __name__ == "__main__":
-    run()

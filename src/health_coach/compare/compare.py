@@ -3,12 +3,13 @@ import random
 import os
 
 from typing import List, Dict, Any
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 
 import health_coach.config as cfg
 import health_coach.compare.train as train
+import health_coach.compare.train_agents as agent_train
 import health_coach.compare.eval as eval
-
+from health_coach.rl import SimpleQLearningEngine
 
 import statistics
 from typing import List, Dict, Any, Tuple
@@ -63,7 +64,7 @@ def explorer_job(
 ) -> List[Dict[str, Any]]:
  
     results = []
-    for seed in seeds:
+    for seed in range(seeds):
         random.seed(seed)
         np.random.seed(seed)
 
@@ -80,24 +81,45 @@ def explorer_job(
 
     return results
 
-def run_pure_comparison(
-    train_eps,
-    val_eps,
-    explorers
-) -> None:
+def run_agent_comparison(train_eps, val_eps, explorers):
+    engine = SimpleQLearningEngine(
+        explorers, 
+        reward_function, 
+        cfg.ALPHA, 
+        cfg.GAMMA
+    )
+
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as exe:
+        futures = [
+            exe.submit(agent_train.train_agent_worker, engine, ep)
+            for ep in train_eps
+        ]
+        for f in as_completed(futures):
+            _ = f.result()
+
+    q_table = engine.q_table.copy()
+    metrics = eval.evaluate_metrics(q_table, val_eps)
+    print("Agent-augmented eval:", metrics)
+
+def run_pure_comparison(train_eps, val_eps, explorers) -> None:
     all_results: List[Dict[str, Any]] = []
 
     with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
         futures = []
         for explorer in explorers:
             for _ in range(cfg.N_TRIALS):
-                alpha, gamma = cfg.sample_hyperparams()
+                alpha, gamma = (
+                    cfg.sample_hyperparams()
+                    if cfg.SHOULD_SAMPLE_HYPERPARAMS
+                    else (cfg.ALPHA, cfg.GAMMA)
+                )
+
                 futures.append(executor.submit(
                     explorer_job,
                     explorer,
                     train_eps,
                     val_eps,
-                    cfg.SEEDS,
+                    cfg.N_SEEDS,
                     alpha,
                     gamma
                 ))

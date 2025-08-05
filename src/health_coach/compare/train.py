@@ -33,7 +33,7 @@ def train_q_table(
 
     for ep in train_eps:
         q_table = environ.run_episode(ep)
-        cfg.update_epsilon() # MOVE TO STEP_FUNC
+        cfg.update_epsilon() 
 
     top2 = np.partition(q_table, -2, axis=1)[:, -2:]
     gaps = top2[:,1] - top2[:,0]

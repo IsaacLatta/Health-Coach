@@ -342,7 +342,7 @@ class ContextResponse(BaseModel):
 class ShapeRewardContext(TaskProxy):
     def name(self) -> str:
         return "provide_context"
-
+ 
     def default_description(self) -> Optional[str]:
         return (
             "Your responsibility is to provide a textual summary of this reinforcement learning system's state." 

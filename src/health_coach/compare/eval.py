@@ -1,22 +1,32 @@
 import statistics
-
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Callable, Any
+from pathlib import Path
+from datetime import datetime
 
 from health_coach.compare.env import DriftOfflineEnvironment
 import health_coach.rl_data_gen.drift as drift
 
-PURE_OUTPUT_CSV = "pure_results.csv"
+import health_coach.config as cfg
+
+RESULTS_DIR = Path(__file__).parents[3] / "results" / "comparison"
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+def make_output_path(prefix: str = "pure_results") -> Path:
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return RESULTS_DIR / f"{ts}_{prefix}.csv"
 
 def reward_function(prev_state: int, current_state: int) -> float:
     res = prev_state - current_state
     return res
 
-def save_results(results, output_path = PURE_OUTPUT_CSV):
+def save_results(results: List[Dict[str, Any]], prefix: str = "pure_results") -> Path:
+    output_path = make_output_path(prefix)
     df = pd.DataFrame(results)
     df.to_csv(output_path, index=False)
-    print(f"Saved pure RL evaluation results to {output_path}")
+    print(f"Saved results to {output_path}")
+    return output_path
 
 def print_results(results: List[Dict[str, Any]], explorer_name: str) -> None:
     runs = [r for r in results if r.get("strategy") == explorer_name]
@@ -50,7 +60,9 @@ def print_results(results: List[Dict[str, Any]], explorer_name: str) -> None:
         std_val  = statistics.stdev(vals) if len(vals) > 1 else 0.0
         print(f"  {label}: {mean_val:.4f} ± {std_val:.4f}")
     print()
-
+    mean_raw = statistics.mean([r["total_raw_trajectory_regret"] for r in runs])
+    per_step = mean_raw / cfg.EPISODE_LENGTH
+    print(f" Mean per-step trajectory regret: {per_step:.4f}\n")
 
 def evaluate_metrics(
     q_table: np.ndarray,

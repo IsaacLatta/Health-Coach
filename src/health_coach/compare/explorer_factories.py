@@ -45,16 +45,13 @@ def make_count_bonus_fn(beta: float) -> Callable[[int, np.ndarray], int]:
         return count_bonus_fn(state, q_table, beta=beta)
     return explorer
 
-
-def make_thompson_fn(std: float) -> Callable[[int, np.ndarray], int]:
+def make_thompson_fn(sigma: float) -> Callable[[int, np.ndarray], int]:
     """
-    Returns a Thompson-sampling explorer using posterior std=std.
-    (Note: _get_q_posterior currently uses default_std; you'd need to pass std to that function if you want to tune it.)
+    Returns a Thompson-sampling explorer using posterior std=sigma.
     """
     def explorer(state: int, q_table: np.ndarray) -> int:
-        return thompson_fn(state, q_table)
+        return thompson_fn(state, q_table, sigma)
     return explorer
-
 
 def make_maxent_fn(alpha: float) -> Callable[[int, np.ndarray], int]:
     """

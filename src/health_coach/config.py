@@ -11,13 +11,21 @@ EPISODE_LENGTH = 100
 TRAIN_FRACTION: float = 0.8
 EVAL_FRACTION: float = 0.2
 
+# Global hyperparams
 ALPHA: float = 0.5
 GAMMA: float = 0.5
+SHOULD_SAMPLE_HYPERPARAMS: bool = True
 
 ALPHA_RANGE: float = (0.01, 1.0)
 GAMMA_RANGE: float = (0.90, 1.0)
 N_TRIALS = 10
 N_SEEDS = 3
+
+# Explorer params
+SOFTMAX_TEMP: float = 1.0
+MAXENT_ALPHA: float =  0.5
+THOMPSON_SIGMA: float = 0.1
+UCB_C: float = 1.0
 
 EPSILON_START: float = 1.0
 EPSILON_END: float = 0.01
@@ -34,17 +42,32 @@ def sample_hyperparams():
 
 def print_config() -> None:
     print("=== Configuration for RL Comparison ===\n"
-        f"  Environment:\n"  
-        f"    Action Noise STD: {NOISE_STD}\n"    
-        f"    Q States: {Q_STATES}\n"
-        f"    Q Actions: {Q_ACTIONS}\n"
-        f"  Episodes: {NUM_EPISODES}\n"
-        f"    Length: {EPISODE_LENGTH}\n"
-        f"    Train: {TRAIN_FRACTION*100}\n"
-        f"    Eval: {EVAL_FRACTION*100}\n"
-        "\n"
-        f"  Explorers:\n"
-        f"    Epsilon Greedy:\n"
-        f"      Epsilon Start: {EPSILON_START}\n"
-        f"      Epsilon End: {EPSILON_END}\n"
-        f"      Epsilon Decay Rate: {EPSILON_DECAY_RATE}\n")
+          "  Environment:\n"
+          f"    Action Noise STD: {NOISE_STD}\n"
+          f"    Q States: {Q_STATES}\n"
+          f"    Q Actions: {Q_ACTIONS}\n"
+          "  Episodes:\n"
+          f"    Total: {NUM_EPISODES}\n"
+          f"    Length: {EPISODE_LENGTH}\n"
+          f"    Train Fraction: {TRAIN_FRACTION*100:.1f}%\n"
+          f"    Eval  Fraction: {EVAL_FRACTION*100:.1f}%\n")
+
+    print("  Global Hyperparameters:")
+    if SHOULD_SAMPLE_HYPERPARAMS:
+        print(f"    α ∈ [{ALPHA_RANGE[0]:.2f}, {ALPHA_RANGE[1]:.2f}], "
+              f"γ ∈ [{GAMMA_RANGE[0]:.2f}, {GAMMA_RANGE[1]:.2f}]")
+        print(f"    Trials: {N_TRIALS}, Seeds per trial: {N_SEEDS}")
+    else:
+        print(f"    α = {ALPHA:.4f}, γ = {GAMMA:.4f}")
+    print()
+
+    print("  Explorer Parameters (fixed):")
+    print("    Epsilon-Greedy:")
+    print(f"      ε start = {EPSILON_START:.2f}, "
+          f"ε end = {EPSILON_END:.2f}, "
+          f"decay = {EPSILON_DECAY_RATE:.6f}")
+    print(f"    Softmax temperature = {SOFTMAX_TEMP:.4f}")
+    print(f"    MaxEnt α = {MAXENT_ALPHA:.4f}")
+    print(f"    Thompson σ = {THOMPSON_SIGMA:.4f}")
+    print(f"    UCB c = {UCB_C:.4f}")
+    print()
