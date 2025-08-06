@@ -167,109 +167,6 @@ class LoadConfiguration(TaskProxy):
     def default_expected_output(self) -> Optional[str]:
         return "{config: dict}"
 
-
-class NewConfigResponse(BaseModel):
-    new_config: Dict[str, Any]
-
-
-class UpdateConfiguration(TaskProxy):
-    def name(self) -> str:
-        return "update_configuration"
-
-    def default_description(self) -> Optional[str]:
-        return (
-            "Given a partial config update, validate and write to YAML, then "
-            "RETURN ONLY `{ \"new_config\": <updated_config_dict> }`."
-        )
-
-    def default_tools(self) -> Optional[List[BaseTool]]:
-        return [update_configuration]
-
-    def default_context(self) -> Optional[List[Task]]:
-        return None
-
-    def default_tools_input(self) -> Optional[Dict[str, Any]]:
-        return {
-            "update_configuration": {
-                "new_config": "{load_configuration.config}"
-            }
-        }
-
-    def default_output_json(self) -> Optional[Type[BaseModel]]:
-        return NewConfigResponse
-
-    def default_expected_output(self) -> Optional[str]:
-        return "{new_config: dict}"
-
-
-class StateResponse(BaseModel):
-    state: int
-
-class ComputeCurrentState(TaskProxy):
-    def name(self) -> str:
-        return "compute_current_state"
-
-    def default_description(self) -> Optional[str]:
-        return (
-            "Given a raw probability {prediction}, invoke `discretize_probability` "
-            "and RETURN ONLY `{ \"state\": <int> }`."
-        )
-
-    def default_tools(self) -> Optional[List[BaseTool]]:
-        return [discretize_probability]
-
-    def default_context(self) -> Optional[List[Task]]:
-        return None
-
-    def default_tools_input(self) -> Optional[Dict[str, Any]]:
-        return {
-            "discretize_probability": {
-                "state": "{prediction}"
-            }
-        }
-
-    def default_output_json(self) -> Optional[Type[BaseModel]]:
-        return StateResponse
-
-    def default_expected_output(self) -> Optional[str]:
-        return "{state: int}"
-
-
-class ActionResponse(BaseModel):
-    action: int
-
-
-class ComputeAction(TaskProxy):
-    def name(self) -> str:
-        return "compute_action"
-
-    def default_description(self) -> Optional[str]:
-        return (
-            "Given state {compute_current_state.state} and exploration rate {epsilon}, "
-            "invoke `select_action` and RETURN ONLY `{ \"action\": <int> }`."
-        )
-
-    def default_tools(self) -> Optional[List[BaseTool]]:
-        return [select_action]
-
-    def default_context(self) -> Optional[List[Task]]:
-        return None
-
-    def default_tools_input(self) -> Optional[Dict[str, Any]]:
-        return {
-            "select_action": {
-                "state": "{compute_current_state.state}",
-                "epsilon": "{epsilon}"
-            }
-        }
-
-    def default_output_json(self) -> Optional[Type[BaseModel]]:
-        return ActionResponse
-
-    def default_expected_output(self) -> Optional[str]:
-        return "{action: int}"
-
-
 class RewardResponse(BaseModel):
     reward: float
 
@@ -375,15 +272,27 @@ class ShapeRewardContext(TaskProxy):
     def default_expected_output(self) -> Optional[str]:
         return "{context: str}"
 
+
+
+class ActionResponse(BaseModel):
+    select: int
+
 class ShapeAction(TaskProxy):
     def name(self) -> str:
         return "shape_action"
 
     def default_description(self) -> Optional[str]:
         return (
-            "Given the current state and optional system context, select an action by dynamically choosing among "
-            "provided exploration strategies (epsilon-greedy, softmax, UCB, Thompson sampling, count bonus, or maxent). "
-            "Return ONLY { \"action\": <int> } as valid JSON."
+            "You must choose exactly one exploration strategy by its index. Use this mapping:\n"
+            "0 : epsilon_greedy\n"
+            "1 : softmax\n"
+            "2 : ucb\n"
+            "3 : thompson_sampling\n"
+            "4 : count_bonus\n"
+            "5 : maxent\n\n"
+            "Return ONLY valid JSON in the form:\n"
+            "{ \"select\": <int> }\n"
+            "where <int> is an integer from 0 to 5 corresponding to your chosen strategy."
         )
 
     def default_tools(self) -> Optional[List[BaseTool]]:
@@ -391,22 +300,16 @@ class ShapeAction(TaskProxy):
 
     def default_context(self) -> Optional[List[Task]]:
         return None
-
+    
     def default_tools_input(self) -> Optional[Dict[str, Any]]:
-        return {
-            "epsilon_greedy":    {"state": "{compute_current_state.state}", "epsilon": "{epsilon}"},
-            "softmax":           {"state": "{compute_current_state.state}", "temperature": "{temperature}"},
-            "ucb":               {"state": "{compute_current_state.state}", "c": "{ucb_coefficient}"},
-            "thompson":          {"state": "{compute_current_state.state}"},
-            "count_bonus":       {"state": "{compute_current_state.state}", "beta": "{beta}"},
-            "maxent":            {"state": "{compute_current_state.state}", "alpha": "{alpha}"},
-        }
+        return None
 
     def default_output_json(self) -> Optional[Type[BaseModel]]:
         return ActionResponse
 
     def default_expected_output(self) -> Optional[str]:
-        return "{action: int}"
+        return "{select: int}"
+
 
 class UpdateRLResponse(BaseModel):
     success: bool

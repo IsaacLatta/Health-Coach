@@ -39,11 +39,11 @@ class RLFlow(Flow[RLState]):
             self.state.curr_state,
             self.state.env_reward
         )
+        return self.state.context
 
     @listen(make_context)
     def shape_action(self):
-        eng = self.state.rl_engine
-        self.state.action = eng.shape_action(
+        self.state.action = self.state.rl_engine.shape_action(
             self.state.prev_state,
             self.state.curr_state,
             self.state.env_reward,

@@ -49,7 +49,7 @@ from pathlib import Path
 from health_coach.rl import  QLearningEngine
 from health_coach.flows import RLFlow, StateExampleFlow 
 
-from health_coach.compare.main_compare import run_pure
+from health_coach.compare.main_compare import run_pure, run_agent
 
 import health_coach.config as cfg
 from health_coach.rl import SimpleQLearningEngine
@@ -57,6 +57,8 @@ from health_coach.compare.train import reward_function
 from health_coach.tools.rl_tools.action import get_all_tools
 
 def test():
+    run_agent()
+
     engine = SimpleQLearningEngine(
         get_all_tools, 
         reward_function, 

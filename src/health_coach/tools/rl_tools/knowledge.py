@@ -1,3 +1,4 @@
+from crewai.knowledge.source.string_knowledge_source import StringKnowledgeSource
 
 CONTEXT_KNOWLEDGE_SOURCE = """ 
 ## 1. Introduction
@@ -301,3 +302,45 @@ r'(s,a,s') = r(s,a,s') + w(s,a) · F(s,a,s')
 
 The weight function w(s,a) can itself be optimized (e.g., via gradient methods) to maximize the true cumulative return ([arXiv][13]).
 """
+
+CONTEXT_VARS_KNOWLEDGE_SOURCE = """
+## 6. Rich Context Variables for Dynamic Shaping
+
+### 6.1 Step Index
+A simple counter of how many environment steps have been taken so far; helps the agent know “early vs. late” in training.
+
+### 6.2 Visit Counts & Action Ratios
+- **Visit Count**: Number of times the current state has been observed.
+- **Action Count**: Number of times the chosen action has been taken in this state.
+- **Action Ratio**: The fraction of visits in which this action was picked, indicating over- or under-sampling.
+  > Visit counts inform intrinsic exploration bonuses such as UCB in multi-armed bandits :contentReference[oaicite:0]{index=0}.
+
+### 6.3 Rolling Reward Statistics
+- **Reward Mean & Variance**: Short-term moving average and variability of recent rewards, highlighting performance trends.
+- **Reward Trend**: Difference between the newest and oldest entries in the reward buffer, showing improvement or plateau.
+
+### 6.4 Q-Value Metrics
+- **Max / Mean / Variance of Q(s,·)**: Statistical moments of the action-value estimates indicate certainty in value estimates.
+- **Q-Gap**: Difference between the best and second-best Q-values; a large gap means one action is decisively superior.
+  > Q-values form the backbone of value-based RL, guiding policy updates and exploration–exploitation trade-offs :contentReference[oaicite:1]{index=1}.
+
+### 6.5 Policy Entropy
+\[
+H(\pi) \;=\; -\sum_a \pi(a|s)\,\log\pi(a|s).
+\]
+Measures randomness of the action distribution: higher entropy drives exploration, lower entropy indicates exploitation.
+> Entropy quantifies uncertainty in distributions and is foundational in maximum-entropy RL methods :contentReference[oaicite:2]{index=2}.
+
+### 6.6 Temporal Difference (TD) Error
+\[
+\delta = r + \gamma\,\max_{a'}Q(s',a') \;-\; Q(s,a),
+\]
+the prediction error driving bootstrap updates. Large TD-errors signal “surprises” that may warrant strategic shifts :contentReference[oaicite:3]{index=3}.
+"""
+
+def get_all_sources():
+    return [
+        StringKnowledgeSource(content=CONTEXT_VARS_KNOWLEDGE_SOURCE),
+        StringKnowledgeSource(content=CONTEXT_KNOWLEDGE_SOURCE), 
+        StringKnowledgeSource(content=SHAPING_KNOWLEDGE_SOURCE)
+    ]

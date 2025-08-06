@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from pydantic import BaseModel
 
 from crewai.tasks.hallucination_guardrail import HallucinationGuardrail
@@ -7,8 +7,7 @@ from crewai.knowledge.source import base_knowledge_source
 from crewai import Agent
 from crewai.knowledge.source.string_knowledge_source import StringKnowledgeSource
 
-from health_coach.tools.rl_tools.knowledge import CONTEXT_KNOWLEDGE_SOURCE, SHAPING_KNOWLEDGE_SOURCE
-
+from health_coach.tools.rl_tools.knowledge import get_all_sources
 class AgentProxy(ABC):
     @abstractmethod
     def default_name(self) -> str:
@@ -26,8 +25,8 @@ class AgentProxy(ABC):
     def default_backstory(self) -> str:
         ...
 
-    def default_knowledge_source(self) -> Optional[base_knowledge_source.BaseKnowledgeSource]:
-        None
+    def default_knowledge_sources(self) -> Optional[List[base_knowledge_source.BaseKnowledgeSource]]:
+        return None
 
     def default_max_iter(self) -> Optional[int]:
         return 1
@@ -55,66 +54,11 @@ class AgentProxy(ABC):
         verbose = overrides.get("verbose", self.default_verbose())
         if verbose is not None:
             kwargs["verbose"] = verbose
-        knowledge_source = overrides.get("knowledge_source", self.default_knowledge_source())
-        if knowledge_source is not None:
-            kwargs["knowledge_source"] = knowledge_source
+        knowledge_sources = overrides.get("knowledge_sources", self.default_knowledge_sources())
+        if knowledge_sources is not None:
+            kwargs["knowledge_sources"] = knowledge_sources
 
         return Agent(**kwargs)
-
-class DataLoaderAgent(AgentProxy):
-    def default_name(self) -> str:
-        return "data_loader_agent"
-
-    def default_role(self) -> str:
-        return (
-            "Your single responsibility is to correctly load structured data "
-            "from a specified source for downstream agent processing."
-        )
-
-    def default_goal(self) -> str:
-        return (
-            "Given a data source descriptor and an expected schema, load and return "
-            "the data in exactly the required format. Your responsible for ensuring real data is "
-            "loaded; never invent, omit, or mutate values. After 3 failed attempts, return an empty container."
-        )
-
-    def default_backstory(self) -> str:
-        return (
-            "You are a reliable data-engineer agent. You know how to open and parse "
-            "files (CSV, JSON, YAML, etc.), validate that each field matches the schema, "
-            "and handle I/O errors gracefully. If loading fails, retry up to 3 times "
-            "with exponential backoff; if still unsuccessful, return an empty collection."
-        )
-
-    def default_max_iter(self) -> Optional[int]:
-        return 3
-
-class DataExportAgent(AgentProxy):
-    def default_name(self) -> str:
-        return "data_export_agent"
-
-    def default_role(self) -> str:
-        return (
-            "Your single responsibility is to persist structured data "
-            "to a specified destination for downstream agent processing."
-        )
-
-    def default_goal(self) -> str:
-        return (
-            "Given a validated data payload and a target, export the data via the given tool, "
-            "write or update the data store atomically and without losing or mutating any fields."
-        )
-
-    def default_backstory(self) -> str:
-        return (
-            "You are a meticulous I/O specialist. You know how to open files or database connections, "
-            "acquire necessary locks, and perform atomic writes to CSVs, JSON, YAML, or other stores. "
-            "You handle write errors gracefully—retrying up to 2 more times with exponential backoff—and "
-            "on persistent failure you log the error and return an empty indicator rather than raising."
-        )
-
-    def default_max_iter(self) -> Optional[int]:
-        return 3
 
 class PolicyAgent(AgentProxy):
     def default_name(self) -> str:
@@ -193,6 +137,8 @@ class RewardShapingAgent(AgentProxy):
             "raw rewards—helping the learner converge faster and more robustly than pure Q-learning alone. "
         )
     
-    def default_knowledge_source(self):
-        return StringKnowledgeSource(content=SHAPING_KNOWLEDGE_SOURCE)
-        # return TextFileKnowledgeSource(file_paths=["qlearning/shaping.txt"])
+    def default_knowledge_sources(self):
+        return get_all_sources()
+    
+    def default_verbose(self) -> bool:
+        return True

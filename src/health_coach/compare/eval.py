@@ -64,6 +64,7 @@ def print_results(results: List[Dict[str, Any]], explorer_name: str) -> None:
     per_step = mean_raw / cfg.EPISODE_LENGTH
     print(f" Mean per-step trajectory regret: {per_step:.4f}\n")
 
+
 def evaluate_metrics(
     q_table: np.ndarray,
     validation_episodes: List[List[float]],
@@ -143,21 +144,33 @@ def evaluate_metrics(
     return {
         "total_raw_trajectory_regret": sum(raw_traj_regrets),
         "mean_raw_trajectory_regret": statistics.mean(raw_traj_regrets),
-        "std_raw_trajectory_regret": statistics.stdev(raw_traj_regrets),
+        "std_raw_trajectory_regret": (
+            statistics.stdev(raw_traj_regrets) if len(raw_traj_regrets) > 1 else 0.0
+        ),
 
         "total_raw_optimal_regret": sum(raw_opt_regrets),
         "mean_raw_optimal_regret": statistics.mean(raw_opt_regrets),
-        "std_raw_optimal_regret": statistics.stdev(raw_opt_regrets),
+        "std_raw_optimal_regret": (
+            statistics.stdev(raw_opt_regrets) if len(raw_opt_regrets) > 1 else 0.0
+        ),
 
         "mean_normalized_trajectory_regret": statistics.mean(norm_traj_regrets),
-        "std_normalized_trajectory_regret": statistics.stdev(norm_traj_regrets),
+        "std_normalized_trajectory_regret": (
+            statistics.stdev(norm_traj_regrets) if len(norm_traj_regrets) > 1 else 0.0
+        ),
         "mean_normalized_optimal_regret": statistics.mean(norm_opt_regrets),
-        "std_normalized_optimal_regret": statistics.stdev(norm_opt_regrets),
+        "std_normalized_optimal_regret": (
+            statistics.stdev(norm_opt_regrets) if len(norm_opt_regrets) > 1 else 0.0
+        ),
 
         "mean_raw_capture_ratio": statistics.mean(raw_capture_ratios),
-        "std_raw_capture_ratio": statistics.stdev(raw_capture_ratios),
+        "std_raw_capture_ratio": (
+            statistics.stdev(raw_capture_ratios) if len(raw_capture_ratios) > 1 else 0.0
+        ),
         "mean_normalized_capture_ratio": statistics.mean(norm_capture_ratios),
-        "std_normalized_capture_ratio": statistics.stdev(norm_capture_ratios),
+        "std_normalized_capture_ratio": (
+            statistics.stdev(norm_capture_ratios) if len(norm_capture_ratios) > 1 else 0.0
+        ),
 
         "visit_counts": visit_counts,
     }

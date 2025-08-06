@@ -18,8 +18,9 @@ def run_pure():
     compare.run_pure_comparison(train_eps, val_eps,  action.get_all_tool_funcs())
 
 def run_agent():
-    num_trend = 5
-    num_random = 2
+    num_trend = int(cfg.NUM_EPISODES * 2/3)
+    num_random = int(cfg.NUM_EPISODES * 1/3)
+    
     episodes = gen.get_episodes(num_trend=num_trend, num_random=num_random)
     random.shuffle(episodes)
     split = int(len(episodes) * cfg.TRAIN_FRACTION)

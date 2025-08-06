@@ -13,7 +13,8 @@ from health_coach.tools.prediction import _make_prediction
 import health_coach.tasks as tasks
 import health_coach.agents as agents
 import health_coach.config as cfg
-
+from health_coach.compare.explorer_selector import execute_explorer
+from health_coach.compare.context_engine import ContextEngine
 
 class QLearningState(BaseModel):
     class Config:
@@ -25,12 +26,6 @@ class RLEngine(ABC):
     @abstractmethod
     def possible_actions(self) -> List[int]:
         ...
-    # @abstractmethod
-    # def encode_prev_state(self, raw_input: Any) -> int:
-    #     ...
-    # @abstractmethod
-    # def encode_curr_state(self, raw_input: Any) -> int:
-    #     ...
     @abstractmethod
     def compute_env_reward(self, prev: int, cur: int) -> float:
         ...
@@ -60,8 +55,8 @@ class SimpleQLearningEngine(RLEngine):
         self.reward_fn = reward_fn
         self.alpha = alpha
         self.gamma = gamma
-        # self.lock = Lock()
         self.verbose = True
+        self.ctx_engine = ContextEngine()
 
     def compute_env_reward(self, prev: int, curr: int):
         return self.reward_fn(prev, curr)
@@ -70,20 +65,34 @@ class SimpleQLearningEngine(RLEngine):
         return list(range(cfg.Q_ACTIONS))
 
     def generate_context(self, prev, cur, reward) -> str:
-        return "Unavailable"
+        try:
+            return self.ctx_engine.generate_context()
+        except Exception as e:
+            return "Unavailable"
+
+    def safe_select(self, result: dict, num_strats: int, default: int = 0) -> int:
+        try:
+            val = result.get("select")
+            if isinstance(val, int) and 0 <= val < num_strats:
+                return val
+            if isinstance(val, str) and val.isdigit():
+                iv = int(val)
+                if 0 <= iv < num_strats:
+                    return iv
+        except Exception:
+            pass
+        return default
 
     def shape_action(self, prev_state: int, current_state: int, reward: float, context: str) -> int:
-        return 0
         inputs = {
-            "previous_state":   prev_state,
-            "current_state":    current_state,
-            "pure_reward":      reward,
-            "context":          context,
-            "possible_actions": self.possible_actions(),
+            "previous_state": prev_state,
+            "current_state": current_state,
+            "pure_reward": reward,
+            "context": context,
         }
 
         agent = agents.RewardShapingAgent().create(max_iter=1, verbose=True)
-        action_t = tasks.ShapeAction().create(agent, tools=self.exploration_tools)
+        action_t = tasks.ShapeAction().create(agent)
         crew = Crew(
             agents=[agent],
             tasks=[action_t],
@@ -91,13 +100,16 @@ class SimpleQLearningEngine(RLEngine):
             verbose=self.verbose,
         )
         json_result = crew.kickoff(inputs=inputs).json_dict
-        return json_result["action"]
+        explorer_idx = self.safe_select(json_result, 6)
+        action = execute_explorer(current_state, explorer_idx, self.q_table)
+        self.ctx_engine.update(prev_state, current_state, reward, action, self.q_table)
+        print(f"\n\nACTION: {action}\nCONTEXT: {context}\n\n")
+        return action
 
     def shape_reward(self, prev, cur, reward, context):
         return reward
     
     def save_state(self, prev, action, reward, cur):
-        # with self.lock:
         best_next = self.q_table[cur].max()
         self.q_table[prev, action] = self.alpha * (reward + self.gamma * best_next) + (1 - self.alpha)*self.q_table[prev, action]
 
