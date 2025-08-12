@@ -1,5 +1,7 @@
 import random
 
+LLM_MODEL: str = "ollama/gemma3:latest"
+
 Q_STATES: int = 30
 Q_ACTIONS: int = 7
 

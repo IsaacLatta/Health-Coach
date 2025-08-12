@@ -57,7 +57,7 @@ from health_coach.compare.train import reward_function
 from health_coach.tools.rl_tools.action import get_all_tools
 
 def test():
-    run_agent()
+    # run_agent()
 
     engine = SimpleQLearningEngine(
         get_all_tools, 

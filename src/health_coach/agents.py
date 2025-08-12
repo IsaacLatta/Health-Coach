@@ -4,10 +4,13 @@ from pydantic import BaseModel
 
 from crewai.tasks.hallucination_guardrail import HallucinationGuardrail
 from crewai.knowledge.source import base_knowledge_source
-from crewai import Agent
+from crewai import Agent, LLM
 from crewai.knowledge.source.string_knowledge_source import StringKnowledgeSource
 
 from health_coach.tools.rl_tools.knowledge import get_all_sources
+
+import health_coach.config as cfg
+
 class AgentProxy(ABC):
     @abstractmethod
     def default_name(self) -> str:
@@ -33,6 +36,12 @@ class AgentProxy(ABC):
 
     def default_verbose(self) -> Optional[bool]:
         return True
+    
+    def default_llm(self) -> Optional[Any]:
+        return None
+
+    def default_embedder(self) -> Optional[Any]:
+        return None
 
     def create(self, **overrides: Any) -> Agent:
         kwargs: Dict[str, Any] = {}
@@ -57,6 +66,19 @@ class AgentProxy(ABC):
         knowledge_sources = overrides.get("knowledge_sources", self.default_knowledge_sources())
         if knowledge_sources is not None:
             kwargs["knowledge_sources"] = knowledge_sources
+        llm = overrides.get("llm", self.default_llm())
+        if llm is not None:
+            print("\n\nLLM found!\n\n")
+            kwargs["llm"] = llm
+        else:
+            print("\n\nNo LLM found.\n\n")
+
+        embedder = overrides.get("embedder", self.default_embedder())
+        if embedder is not None:
+            print(f"\n\nEmbedder found: {embedder}\n\n")
+            kwargs["embedder"] = embedder
+        else:
+            print("\n\nEmbedder not found!\n\n")
 
         return Agent(**kwargs)
 
@@ -105,7 +127,8 @@ class ContextProvidingAgent(AgentProxy):
         return 3
     
     def default_knowledge_source(self):
-        return StringKnowledgeSource(content=CONTEXT_KNOWLEDGE_SOURCE)
+        return None
+        # return StringKnowledgeSource(content=CONTEXT_KNOWLEDGE_SOURCE)
         # return TextFileKnowledgeSource(file_paths=["qlearning/q_learning.txt"])
 
 class RewardShapingAgent(AgentProxy):
@@ -142,3 +165,17 @@ class RewardShapingAgent(AgentProxy):
     
     def default_verbose(self) -> bool:
         return True
+
+    def default_llm(self):
+        return LLM(
+            model=cfg.LLM_MODEL,
+            base_url="http://localhost:11434"   
+        )
+    
+    def default_embedder(self):
+        return {
+            "provider": "ollama",
+            "config": {
+                "model": "nomic-embed-text",
+            }
+        }
