@@ -1,6 +1,10 @@
 import random
 
-LLM_MODEL: str = "ollama/gemma3:latest"
+# LLM_MODEL: str = "ollama/gemma3:latest"
+# LLM_MODEL: str = "ollama/qwen3:1.7b"
+LLM_MODEL: str = "ollama/qwen3:4b"
+LLM_BASE_URL: str = "http://192.168.1.202:80"
+# LLM_BASE_URL: str = "http://127.0.0.1:11434"
 
 Q_STATES: int = 30
 Q_ACTIONS: int = 7

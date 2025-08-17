@@ -2,6 +2,7 @@
 import sys
 import warnings
 import json
+import time
 
 # from health_coach.crew import make_health_coach
 
@@ -59,6 +60,8 @@ from health_coach.tools.rl_tools.action import get_all_tools
 def test():
     # run_agent()
 
+    start_time = time.time()
+
     engine = SimpleQLearningEngine(
         get_all_tools, 
         reward_function, 
@@ -70,7 +73,10 @@ def test():
     flow.set_rl_engine(engine)
     flow.set_state(1, 2)
     res = flow.kickoff()
-    print(f"Got {res}, state: {flow.state}")
+    # print(f"Got {res}, state: {flow.state}")
+    end_time = time.time()
+    elapsed = end_time - start_time
+    print(f"Total execution time: {elapsed:.2f} seconds for model {cfg.LLM_MODEL}")
 
     # flow = StateExampleFlow()
     # # flow.plot("my_flow_plot")

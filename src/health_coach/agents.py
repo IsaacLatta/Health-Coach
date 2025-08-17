@@ -161,7 +161,8 @@ class RewardShapingAgent(AgentProxy):
         )
     
     def default_knowledge_sources(self):
-        return get_all_sources()
+        # return None
+        return [get_all_sources()[0]]
     
     def default_verbose(self) -> bool:
         return True
@@ -169,10 +170,11 @@ class RewardShapingAgent(AgentProxy):
     def default_llm(self):
         return LLM(
             model=cfg.LLM_MODEL,
-            base_url="http://localhost:11434"   
+            base_url=cfg.LLM_BASE_URL,
         )
     
     def default_embedder(self):
+        # return None
         return {
             "provider": "ollama",
             "config": {

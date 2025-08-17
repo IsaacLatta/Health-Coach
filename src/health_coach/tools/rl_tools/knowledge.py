@@ -338,8 +338,23 @@ Measures randomness of the action distribution: higher entropy drives exploratio
 the prediction error driving bootstrap updates. Large TD-errors signal “surprises” that may warrant strategic shifts :contentReference[oaicite:3]{index=3}.
 """
 
+SIMPLE_KNOWLEDGE_SOURCE="""
+Exploration Strategies:
+- Epsilon-greedy: probability epsilon for random action, else best Q-value
+- UCB: Q(s,a) + sqrt(2*ln(t)/N(s,a)) - optimism under uncertainty  
+- Thompson Sampling: Bayesian sampling from posterior
+- Softmax: exp(Q(s,a)/tau) temperature-based selection
+
+Context Signals:
+- Visit counts: low counts → more exploration needed
+- TD error: high error → learning actively, adjust exploration
+- Episode progress: early → explore more, late → exploit more
+- Reward trends: plateau → increase exploration
+"""
+
 def get_all_sources():
     return [
+        StringKnowledgeSource(content=SIMPLE_KNOWLEDGE_SOURCE),
         StringKnowledgeSource(content=CONTEXT_VARS_KNOWLEDGE_SOURCE),
         StringKnowledgeSource(content=CONTEXT_KNOWLEDGE_SOURCE), 
         StringKnowledgeSource(content=SHAPING_KNOWLEDGE_SOURCE)

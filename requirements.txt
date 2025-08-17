@@ -1,0 +1,13 @@
+crewai[tools]>=0.121.1,<1.0.0
+scikit-learn>=1.7.0,<2.0.0
+shap>=0.47.2
+gym>=0.26.0,<1.0.0
+pytest>=8.4.1
+streamlit>=1.39.0
+flask>=3.0.0
+flask-cors>=5.0.0
+catboost>=1.2.0
+pandas>=2.0.0
+numpy>=1.24.0
+requests>=2.31.0
+python-dotenv>=1.0.0
