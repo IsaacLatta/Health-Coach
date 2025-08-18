@@ -12,7 +12,7 @@ class ReportingDeps:
     templater: Optional[svc.TemplateService] = None
     
     @classmethod
-    def builder(cls):
+    def make(cls):
         return cls()
     
     def with_configs(self, configs: store.ConfigStore):

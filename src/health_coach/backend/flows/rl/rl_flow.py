@@ -26,11 +26,12 @@ class RLState(BaseModel):
 class RLFlow(Flow[RLState]):
 
     def __init__(self, dependencies, inputs, prev_state, cur_state):
+        super().__init__(RLState())
         self.state.dependencies = dependencies
         self.state.rl_engine = self.state.dependencies.engine # for convenience
         self.state.inputs = inputs
         self.state.prev_state = prev_state
-        self.curr_state = cur_state
+        self.state.curr_state = cur_state
 
     @start()
     def compute_reward(self):

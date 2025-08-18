@@ -14,7 +14,7 @@ class RLDeps:
     # later add the context engine
     
     @classmethod
-    def builder(cls):
+    def make(cls):
         return cls()
     
     def with_qtable(self, qtable: store.QTableStore):

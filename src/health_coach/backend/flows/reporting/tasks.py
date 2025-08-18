@@ -1,39 +1,65 @@
-from pydantic import BaseModel
+from typing import Any, List, Literal, Optional, Dict
+from pydantic import BaseModel, Field
+from crewai import Task
+from .agents import shap_explainer_agent, risk_summary_agent
 
-from crewai import Crew, Process, Task, Agent
+class ShapExplanationItem(BaseModel):
+    feature: str
+    value: Any
+    phi: float                              # raw shap value
+    direction: Literal["increases","decreases","mixed"]
+    magnitude: float                        # abs(phi)
+    explanation: str                        # short patient-friendly sentence
 
-from .agents import explanation_agent
-from .tools.explanation import generate_prediction_explanation  
-
-# TODO: Update the prompts
-
-class ShapExplanationResponse(BaseModel):
-    ...
-
-# UPDATE TO: map of shap values to explanations
-explanation_task = Task(
-        name="explanation_task",
-        description="Explain the prediction for features {features} with feature names {feature_names}.",
-        agent=explanation_agent,
-        #expected_output='{"html": str}', # Update this with the new format
-        output_json= ShapExplanationResponse,
-        output_pydantic=ShapExplanationResponse
+class ShapExplanations(BaseModel):
+    items: List[ShapExplanationItem] = Field(default_factory=list)
+    notes: Optional[str] = Field(
+        default="Explanations reflect model attributions, not medical advice."
     )
 
-# UPDATE TO: an overall explanation
-report_task = Task(
-    name="report_task",
+class RiskSummary(BaseModel):
+    risk_label: Literal["low","medium","high"]
+    probability: float                      # 0..1
+    thresholds: Dict[str, float]            # {"moderate":0.33,"high":0.66}
+    key_drivers: List[str]                  # feature names ordered by impact
+    narrative: str                          # 3–6 sentences, concise
+    caveats: List[str] = Field(
+        default_factory=lambda: [
+            "Model output is supportive information only and not a diagnosis."
+        ]
+    )
+
+shap_explanations_task = Task(
+    name="shap_explanations_task",
     description=(
-        "Generate an HTML report for features {features} "
-        "and heart disease prediction. ALWAYS save the report file to disk after generation."
+        "You are given a list of SHAP items for a single patient.\n"
+        "Each item has: feature, value, phi (may be positive or negative).\n\n"
+        "For EACH item:\n"
+        " - Set direction to 'increases' if phi>0, 'decreases' if phi<0, else 'mixed'.\n"
+        " - Set magnitude to abs(phi).\n"
+        " - Write one short, patient-friendly explanation of HOW this feature influenced the risk.\n"
+        "Do NOT change any numeric values. Keep explanations neutral and non-clinical."
     ),
-    agent=explanation_agent,
-    tools_input={ 
-        "generate_report": {
-            "features":   "{features}",
-            "probability":"{prediction_task.probability}",
-            "explanation":"{explanation_task.html}"
-        }
-    },
-    expected_output='{"html": str}',
+    agent=shap_explainer_agent,
+    output_pydantic=ShapExplanations,
 )
+
+risk_summary_task = Task(
+    name="risk_summary_task",
+    description=(
+        "Summarize overall risk for a single patient.\n"
+        "Inputs:\n"
+        " - probability: {probability}\n"
+        " - risk_label: {risk_label}\n"
+        " - thresholds: {thresholds}\n"
+        " - shap_explanations: {shap_explanations_task.output.pydantic}\n\n"
+        "Requirements:\n"
+        " - Provide a concise narrative (3–6 sentences) explaining WHY the model assigned this risk.\n"
+        " - List key drivers, ordered by absolute impact (top-first), using feature names only.\n"
+        " - Include a brief caveat that this is decision support, not medical advice.\n"
+        " - Keep tone clinical-neutral and avoid recommendations or treatment."
+    ),
+    agent=risk_summary_agent,
+    output_pydantic=RiskSummary,
+)
+
