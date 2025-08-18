@@ -40,22 +40,22 @@ def replay():
     #     raise Exception(f"An error occurred while replaying the crew: {e}")
 
 import health_coach.tools.rl_tools as rl_tools 
-import health_coach.tools.rl_tools.action
+import health_coach.backend.agents.flows.rl.tools.exploration
 import health_coach.tools.rl_tools.context
 import health_coach.tools.rl_tools.reward
 
 from crewai.utilities.paths import db_storage_path
 from pathlib import Path
 
-from health_coach.rl import  QLearningEngine
-from health_coach.flows import RLFlow, StateExampleFlow 
+from health_coach.backend.agents.flows.rl.rl_engine import  QLearningEngine
+from health_coach.backend.agents.flows.rl.flows import RLFlow, StateExampleFlow 
 
 from health_coach.compare.main_compare import run_pure, run_agent
 
 import health_coach.config as cfg
-from health_coach.rl import SimpleQLearningEngine
+from health_coach.backend.agents.flows.rl.rl_engine import SimpleQLearningEngine
 from health_coach.compare.train import reward_function
-from health_coach.tools.rl_tools.action import get_all_tools
+from health_coach.backend.agents.flows.rl.tools.exploration import get_all_tools
 
 def test():
     # run_agent()

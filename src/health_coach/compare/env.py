@@ -6,7 +6,7 @@ from typing import Any, List, Dict, Callable, Tuple
 from pydantic import BaseModel
 from crewai.flow.flow import Flow
 
-from health_coach.flows import RLFlow
+from health_coach.backend.agents.flows.rl.flows import RLFlow
 from health_coach.rl_data_gen.drift import simulate_drift
 
 import health_coach.config as cfg

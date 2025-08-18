@@ -6,7 +6,7 @@ import health_coach.tools.data as data_mod
 
 from health_coach.tools.prediction import predict_heart_disease
 from health_coach.tools.reporting import generate_report, save_report
-from health_coach.tools.explanation import generate_prediction_explanation
+from health_coach.backend.agents.flows.reporting.tools.explanation import generate_prediction_explanation
 
 from health_coach.agents import data_input_agent, data_export_agent
 from health_coach.tasks import get_load_configuration_task

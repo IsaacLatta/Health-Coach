@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from crewai import Crew, Process
 
-from health_coach.rl import QLearningImplementation
+from health_coach.backend.agents.flows.rl.rl_engine import QLearningImplementation
 
 import health_coach.tools.rl as rl_mod
 import health_coach.tools.data as data_mod

@@ -146,7 +146,7 @@ def get_all_tools():
     """
     return [epsilon_greedy, softmax, ucb, count_bonus, thompson, maxent]
 
-def get_all_tool_funcs():
+def get_all_funcs():
     """
     Return all exploration tools implementations.
     """

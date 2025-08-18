@@ -16,12 +16,6 @@ import health_coach.config as cfg
 from health_coach.compare.explorer_selector import execute_explorer
 from health_coach.compare.context_engine import ContextEngine
 
-class QLearningState(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-    q_table: Optional[np.ndarray] = None
-    previous_state: int = 0
-
 class RLEngine(ABC):
     @abstractmethod
     def possible_actions(self) -> List[int]:

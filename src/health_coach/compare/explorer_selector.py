@@ -1,7 +1,7 @@
 from typing import Callable
 import numpy as np
 import health_coach.config as cfg
-from health_coach.tools.rl_tools.action import (
+from health_coach.backend.agents.flows.rl.tools.exploration import (
     epsilon_greedy_fn,
     softmax_fn,
     ucb_fn,

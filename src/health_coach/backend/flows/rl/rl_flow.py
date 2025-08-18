@@ -3,12 +3,17 @@ from typing import Optional, Any
 import numpy as np
 from crewai.flow.flow import Flow, start, listen, and_
 from crewai.flow.persistence import persist
-from health_coach.rl import RLEngine, QLearningState
+from .rl_engine import SimpleQLearningEngine, RLEngine
+from .tools.exploration import get_all_funcs
+from .dependencies import RLDeps
+
+import health_coach.config as cfg
 
 class RLState(BaseModel):
     class Config:
         arbitrary_types_allowed = True
     
+    dependencies: Optional[RLDeps] = None
     rl_engine: Optional[RLEngine] = None
     prev_state: int = 0
     curr_state: int = 0
@@ -20,12 +25,12 @@ class RLState(BaseModel):
 
 class RLFlow(Flow[RLState]):
 
-    def set_rl_engine(self, engine: RLEngine):
-        self.state.rl_engine = engine
-
-    def set_state(self, previous_state, current_state):
-        self.state.prev_state = previous_state
-        self.state.curr_state = current_state
+    def __init__(self, dependencies, inputs, prev_state, cur_state):
+        self.state.dependencies = dependencies
+        self.state.rl_engine = self.state.dependencies.engine # for convenience
+        self.state.inputs = inputs
+        self.state.prev_state = prev_state
+        self.curr_state = cur_state
 
     @start()
     def compute_reward(self):
@@ -69,22 +74,26 @@ class RLFlow(Flow[RLState]):
         
         return self.state.action
     
-class ExampleState(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-    rl_engine: Optional[RLEngine] = None
-    counter: int = 0
-    message: str = ""
 
-class StateExampleFlow(Flow[ExampleState]):
+def call_rl_flow(inputs):
+    # this func isnt async, it kicks off the task in the bg,  
+    # returns immediatly
 
-    @start()
-    def first_method(self):
-        self.state.message = "Hello from first_method"
-        self.state.counter += 1
+    # here we can also make a prediction
+    # pull down the patient's last prediction
+    # or do it inside the flow
 
-    @listen(first_method)
-    def second_method(self):
-        self.state.message += " - updated by second_method"
-        self.state.counter += 1
-        return 1234
+    def reward_function(prev_state: int, current_state: int) -> float:
+        return prev_state - current_state
+
+    engine = SimpleQLearningEngine(
+        get_all_funcs(), 
+        reward_function,
+        cfg.ALPHA,
+        cfg.GAMMA
+        )
+        
+    prev_state = cur_state = 1234
+    flow = RLFlow(engine, inputs, prev_state, cur_state)
+    result = flow.kickoff()
+    return result
