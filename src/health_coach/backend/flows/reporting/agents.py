@@ -14,7 +14,6 @@ shap_explainer_agent = Agent(
         "you only explain model behavior and contributing factors."
     ),
     verbose=True,
-    allow_delegation=False
 )
 
 risk_summary_agent = Agent(

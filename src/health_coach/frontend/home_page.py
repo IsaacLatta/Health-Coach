@@ -10,8 +10,8 @@ import streamlit.components.v1 as components
 
 try:
     import requests
-except Exception: 
-    requests = None 
+except Exception:
+    requests = None
 
 st.set_page_config(
     page_title="Agent Health Risk Prototype",
@@ -65,12 +65,12 @@ def post_json(url: str, payload: Dict[str, Any], timeout: int = 30) -> Dict[str,
 
 def mock_run_response(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Deterministic, lightweight mock for front-end dev without backend.
-    This returns a structure compatible with /api/run.
+    Returns structure compatible with /api/run or /api/report.
     """
     patient = payload.get("patient", {})
     feats = payload.get("features", {})
-    # Very naive mock risk: proportion of numeric features above a threshold
-    numeric_vals = [float(v) for v in feats.values() if isinstance(v, (int, float)) or str(v).replace('.', '', 1).isdigit()]
+    numeric_vals = [float(v) for v in feats.values()
+                    if isinstance(v, (int, float)) or str(v).replace('.', '', 1).isdigit()]
     avg = sum(numeric_vals)/len(numeric_vals) if numeric_vals else 0.42
     prob = max(0.01, min(0.99, (avg % 1.0)))
     label = "low" if prob < 0.33 else ("medium" if prob < 0.66 else "high")
@@ -116,6 +116,26 @@ def mock_run_response(payload: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+# --------- FIXED MOCK PAYLOAD FOR SERVER TESTING ---------
+SAMPLE_PATIENT = {
+    "id": "P-0001",
+    "name": "Jane Doe",
+    "age": 54,
+    "gender": "Female",
+}
+SAMPLE_FEATURES = {
+    "systolic_bp": 138,
+    "diastolic_bp": 86,
+    "bmi": 29.4,
+    "smoker": "no",
+    "hdl": 42,
+    "ldl": 131,
+    "family_history": "yes",
+    "activity_minutes_per_week": 60,
+}
+# ---------------------------------------------------------
+
+
 st.sidebar.header("Settings")
 st.sidebar.text_input("Backend URL", value=st.session_state["backend_url"], key="backend_url")
 st.sidebar.checkbox("Demo mode (no backend)", value=st.session_state["demo_mode"], key="demo_mode")
@@ -136,9 +156,8 @@ with st.container():
     with col3:
         p_age = st.number_input("Age", min_value=0, max_value=120, value=40, step=1)
     with col4:
-        p_gender = st.selectbox("Gender", ["Female", "Male", "Other", "Prefer not to say"]) 
+        p_gender = st.selectbox("Gender", ["Female", "Male", "Other", "Prefer not to say"])
 
-    # Features expander 
     st.markdown("\n")
     with st.expander("Patient Features (add as needed)", expanded=True):
         st.caption("Add any model inputs here. Leave blank if unknown. You can add new rows dynamically.")
@@ -166,7 +185,7 @@ with st.container():
             with c3:
                 if st.button("🗑️", key=f"feat_del_{idx}"):
                     remove_indices.append(idx)
-            
+
             st.session_state.features[idx] = {"name": name, "value": value}
 
         if remove_indices:
@@ -174,27 +193,6 @@ with st.container():
 
         if st.button("Add feature"):
             st.session_state.features.append({"name": "", "value": ""})
-
-        feature_map: Dict[str, Any] = {}
-        for row in st.session_state.features:
-            name = str(row.get("name", "")).strip()
-            if not name:
-                continue
-            raw_val = row.get("value", "").strip()
-            try:
-                if "." in raw_val:
-                    val = float(raw_val)
-                else:
-                    val = int(raw_val)
-            except Exception:
-                lowered = raw_val.lower()
-                if lowered in {"true", "yes"}:
-                    val = True
-                elif lowered in {"false", "no"}:
-                    val = False
-                else:
-                    val = raw_val
-            feature_map[name] = val
 
     st.markdown("\n")
     run_col, reset_col = st.columns([1, 1])
@@ -207,24 +205,16 @@ with st.container():
 
 result: Dict[str, Any] = {}
 if run_clicked:
-    if not p_id or not p_name:
-        st.error("Please provide at least Patient ID and Full name.")
-    else:
-        payload = {
-            "patient": {
-                "id": p_id,
-                "name": p_name,
-                "age": p_age,
-                "gender": p_gender,
-            },
-            "features": feature_map,
-        }
-        with st.spinner("Running risk report and agentic RL…"):
-            try:
-                result = post_json(f"{backend_url()}/api/run", payload)
-                st.session_state.last_run = result
-            except Exception as e:  # noqa: BLE001 (streamlit demo)
-                st.error(f"Failed to run assessment: {e}")
+    payload = {
+        "patient": SAMPLE_PATIENT,
+        "features": SAMPLE_FEATURES,
+    }
+    with st.spinner("Running risk report…"):
+        try:
+            result = post_json(f"{backend_url()}/api/report", payload)
+            st.session_state.last_run = result
+        except Exception as e:
+            st.error(f"Failed to run assessment: {e}")
 
 show = result or st.session_state.get("last_run")
 if show:
@@ -245,25 +235,22 @@ if show:
     with c3:
         st.progress(min(1.0, max(0.0, float(prob or 0.0))))
 
-    # SHAP table
     shap_items = show.get("shap", [])
     if shap_items:
         st.markdown("**Top factors**")
         df = pd.DataFrame(shap_items)
-        # Nice column order if present
         cols = [c for c in ["feature", "value", "phi", "reason"] if c in df.columns]
         df = df[cols]
         st.dataframe(df, use_container_width=True, hide_index=True)
 
-    # HTML report
     report = show.get("report", {})
     html = report.get("html", "")
     if html:
         with st.expander("View full report", expanded=True):
             components.html(html, height=420, scrolling=True)
 
-        # Download button
-        fname = f"risk_report_{p_id or 'patient'}_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.html"
+        out_id = SAMPLE_PATIENT["id"]
+        fname = f"risk_report_{out_id}_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.html"
         st.download_button(
             label="⬇️ Download report (HTML)",
             data=html,
@@ -271,7 +258,6 @@ if show:
             mime="text/html",
         )
 
-    # Hooks for future panels
     with st.expander("Agent chat (coming soon)"):
         st.info("Chat agent will summarize trends and justify configuration decisions. (Not wired yet.)")
         st.text_input("Message", placeholder="Ask about this patient's trend…", disabled=True)

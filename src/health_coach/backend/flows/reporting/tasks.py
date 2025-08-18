@@ -1,15 +1,15 @@
 from typing import Any, List, Literal, Optional, Dict
 from pydantic import BaseModel, Field
-from crewai import Task
+from crewai import  Task
 from .agents import shap_explainer_agent, risk_summary_agent
 
 class ShapExplanationItem(BaseModel):
     feature: str
     value: Any
-    phi: float                              # raw shap value
+    phi: float
     direction: Literal["increases","decreases","mixed"]
-    magnitude: float                        # abs(phi)
-    explanation: str                        # short patient-friendly sentence
+    magnitude: float
+    explanation: str
 
 class ShapExplanations(BaseModel):
     items: List[ShapExplanationItem] = Field(default_factory=list)
@@ -19,10 +19,10 @@ class ShapExplanations(BaseModel):
 
 class RiskSummary(BaseModel):
     risk_label: Literal["low","medium","high"]
-    probability: float                      # 0..1
-    thresholds: Dict[str, float]            # {"moderate":0.33,"high":0.66}
-    key_drivers: List[str]                  # feature names ordered by impact
-    narrative: str                          # 3–6 sentences, concise
+    probability: float
+    thresholds: Dict[str, float]
+    key_drivers: List[str]
+    narrative: str
     caveats: List[str] = Field(
         default_factory=lambda: [
             "Model output is supportive information only and not a diagnosis."
@@ -33,6 +33,7 @@ shap_explanations_task = Task(
     name="shap_explanations_task",
     description=(
         "You are given a list of SHAP items for a single patient.\n"
+        "Data: {shap}\n"
         "Each item has: feature, value, phi (may be positive or negative).\n\n"
         "For EACH item:\n"
         " - Set direction to 'increases' if phi>0, 'decreases' if phi<0, else 'mixed'.\n"
