@@ -23,9 +23,11 @@ dependencies = [
 [project.scripts]
 health_coach = "health_coach.main:run"
 run_crew = "health_coach.main:run"
-train = "health_coach.main:train"
+train = "health_coach.main:test_reporting"
 replay = "health_coach.main:replay"
-test = "health_coach.main:test"
+test = "health_coach.main:test_rl"
+report = "health_coach.main:test_reporting"
+rl = "health_coach.main:test_rl"
 
 [build-system]
 requires = ["hatchling"]

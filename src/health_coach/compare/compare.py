@@ -9,7 +9,7 @@ import health_coach.config as cfg
 import health_coach.compare.train as train
 import health_coach.compare.train_agents as agent_train
 import health_coach.compare.eval as eval
-from health_coach.backend.agents.flows.rl.rl_engine import SimpleQLearningEngine
+from health_coach.old.rl_engine import SimpleQLearningEngine
 
 import statistics
 from typing import List, Dict, Any, Tuple

@@ -1,6 +1,6 @@
 from typing import Any, List, Literal, Optional, Dict
 from pydantic import BaseModel, Field
-from crewai import  Task
+from crewai import Task
 from .agents import shap_explainer_agent, risk_summary_agent
 
 class ShapExplanationItem(BaseModel):
@@ -43,6 +43,16 @@ shap_explanations_task = Task(
     ),
     agent=shap_explainer_agent,
     output_pydantic=ShapExplanations,
+    expected_output=(
+        "Return ONLY valid JSON matching this schema:\n"
+        "{\n"
+        '  "items": [\n'
+        '    {"feature": "str", "value": <any>, "phi": 0.0, '
+        '"direction": "increases|decreases|mixed", "magnitude": 0.0, "explanation": "str"}\n'
+        "  ],\n"
+        '  "notes": "str (optional)"\n'
+        "}"
+    ),
 )
 
 risk_summary_task = Task(
@@ -62,5 +72,15 @@ risk_summary_task = Task(
     ),
     agent=risk_summary_agent,
     output_pydantic=RiskSummary,
+    expected_output=(
+        "Return ONLY valid JSON matching this schema:\n"
+        "{\n"
+        '  "risk_label": "low|medium|high",\n'
+        '  "probability": 0.0,\n'
+        '  "thresholds": {"low": 0.0, "medium": 0.0, "high": 0.0},\n'
+        '  "key_drivers": ["str", "..."],\n'
+        '  "narrative": "str",\n'
+        '  "caveats": ["str", "..."]\n'
+        "}"
+    ),
 )
-

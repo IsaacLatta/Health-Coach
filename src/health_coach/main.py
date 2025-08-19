@@ -1,110 +1,131 @@
-#!/usr/bin/env python
 import sys
-import warnings
-import json
-import time
-
-# from health_coach.crew import make_health_coach
-
-from datetime import datetime
-
-warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
-
-def run():
-    inputs = {
-        "feature_names" : [ "age","sex","cp","trestbps","chol","fbs", "restecg","thalach","exang","oldpeak","slope","ca","thal" ],
-        "features": [ 63, 1, 1, 145, 233, 1, 2, 150, 0, 2.3, 3, 0, 2 ]
-    }
-
-    try:
-        # make_health_coach().kickoff(inputs=inputs)
-        pass
-    except Exception as e:
-        raise Exception(f"An error occurred while running the crew: {e}")
-
-from health_coach.compare.main_compare import run_agent
-
-def train():
-    run_agent()
-
-    return
-    
-
-def replay():
-    print("Not implemented.")
-    return
-    # try:
-    #     HealthCoach().crew().replay(task_id=sys.argv[1])
-
-    # except Exception as e:
-    #     raise Exception(f"An error occurred while replaying the crew: {e}")
-
-import health_coach.tools.rl_tools as rl_tools 
-import health_coach.backend.agents.flows.rl.tools.exploration
-import health_coach.tools.rl_tools.context
-import health_coach.tools.rl_tools.reward
-
-from crewai.utilities.paths import db_storage_path
-from pathlib import Path
-
-from health_coach.backend.agents.flows.rl.rl_engine import  QLearningEngine
-from health_coach.backend.agents.flows.rl.flows import RLFlow, StateExampleFlow 
-
-from health_coach.compare.main_compare import run_pure, run_agent
+from pprint import pprint
 
 import health_coach.config as cfg
-from health_coach.backend.agents.flows.rl.rl_engine import SimpleQLearningEngine
-from health_coach.compare.train import reward_function
-from health_coach.backend.agents.flows.rl.tools.exploration import get_all_tools
 
-def test():
-    # run_agent()
+from health_coach.backend.flows.reporting.reporting_flow import call_reporting_flow
+from health_coach.backend.flows.reporting.dependencies import ReportingDeps
+from health_coach.backend.services.prediction import MockPredictionService
+from health_coach.backend.services.shap import MockSHAP
+from health_coach.backend.services.template import SimpleHTMLTemplate
+from health_coach.backend.stores.config import InMemConfigs
 
-    start_time = time.time()
+from health_coach.backend.flows.rl.rl_flow import call_rl_flow
+from health_coach.backend.flows.rl.dependencies import RLDeps
+from health_coach.backend.services.context import InMemContextService
+from health_coach.backend.services.rl import QLearningRLService
 
-    engine = SimpleQLearningEngine(
-        get_all_tools, 
-        reward_function, 
-        cfg.ALPHA, 
-        cfg.GAMMA
+from health_coach.backend.stores.qtable import InMemQTables
+from health_coach.backend.stores.transitions import InMemTransitions
+from health_coach.backend.flows.rl.tools.explorer_factories import get_factories
+
+
+def _discretize(prob: float, bins: int = 10) -> int:
+    s = int(float(prob) * bins)
+    return max(0, min(bins - 1, s))
+
+
+def _sample_patient_and_features():
+    patient = {
+        "id": "P-0001",
+        "name": "Jane Doe",
+        "age": 54,
+        "gender": "Female",
+    }
+    features = {
+        "systolic_bp": 138,
+        "diastolic_bp": 86,
+        "bmi": 29.4,
+        "smoker": "no",
+        "hdl": 42,
+        "ldl": 131,
+        "family_history": "yes",
+        "activity_minutes_per_week": 60,
+    }
+    return patient, features
+
+
+# ---------------------------
+# test: REPORTING FLOW
+# ---------------------------
+def test_reporting():
+    """Build reporting deps (in-mem) and run the report flow once with a sample payload."""
+    reporting_deps = (
+        ReportingDeps.make()
+        .with_configs(InMemConfigs())
+        .with_predict(MockPredictionService())
+        .with_shap(MockSHAP())
+        .with_templater(SimpleHTMLTemplate())
     )
 
-    flow = RLFlow()
-    flow.set_rl_engine(engine)
-    flow.set_state(1, 2)
-    res = flow.kickoff()
-    # print(f"Got {res}, state: {flow.state}")
-    end_time = time.time()
-    elapsed = end_time - start_time
-    print(f"Total execution time: {elapsed:.2f} seconds for model {cfg.LLM_MODEL}")
+    patient, features = _sample_patient_and_features()
 
-    # flow = StateExampleFlow()
-    # # flow.plot("my_flow_plot")
-    # final_output = flow.kickoff()
-    # print(f"Final Output: {final_output}")
-    # print("Final State:")
-    # print(flow.state)
+    payload = {
+        "id": patient["id"],
+        "name": patient["name"],
+        "age": patient["age"],
+        "gender": patient["gender"],
+        "features": features,
+    }
 
-
-    # run_comparison()
-    # flow = RLFlow()
-    
-    # flow.set_input(RLInput(
-    #     patient_id="0",
-    #     patient_features= [41.0, 1.0, 4.0, 110.0, 172.0, 0.0, 2.0, 158.0, 0.0, 0.0, 1.0, 0.0, 7.0]
-    # ))
-
-    # agent_engine = QLearningEngine(
-    #         exploration_tools=rl_tools.action.get_all_tools(),
-    #         context_tools=rl_tools.context.get_all_tools(),
-    #         shaping_tools=rl_tools.reward.get_all_tools(),
-    #         max_iter=3,
-    #     )
-
-    # flow.set_rl_engine(agent_engine)
+    print("\n[reporting] running call_reporting_flow() …")
+    out = call_reporting_flow(payload, reporting_deps)
+    result = {
+        "risk": out.get("risk"),
+        "shap_len": len(out.get("shap", [])),
+        "has_html": bool(out.get("report", {}).get("html")),
+    }
+    pprint(result)
+    return out
 
 
-    # result = flow.kickoff()
-    return
+def test_rl():
+    """Build RL deps (context + explorers + q/transition stores) and run a single RL step."""
+    factories = get_factories()
+    explorers = [
+        factories["epsilon_greedy_fn"](epsilon=getattr(cfg, "EPSILON", 0.1)),
+        factories["softmax_fn"](temperature=getattr(cfg, "SOFTMAX_TEMP", 0.5)),
+        factories["ucb_fn"](c=getattr(cfg, "UCB_C", 1.0)),
+        factories["count_bonus_fn"](beta=getattr(cfg, "COUNT_BONUS_BETA", 0.1)),
+        factories["thompson_fn"](sigma=getattr(cfg, "THOMPSON_SIGMA", 1.0)),
+        factories["maxent_fn"](alpha=getattr(cfg, "MAXENT_ALPHA", 0.5)),
+    ]
 
-    
+    def reward_fn(prev: int, cur: int) -> float:
+        return 1.0 if cur < prev else (-1.0 if cur > prev else 0.0)
+
+    rl_service = QLearningRLService(
+        explorers=explorers,
+        reward_fn=reward_fn,
+        alpha=getattr(cfg, "Q_ALPHA", 0.4),
+        gamma=getattr(cfg, "Q_GAMMA", 0.9),
+        verbose=getattr(cfg, "RL_VERBOSE", True),
+    )
+
+    qtables = InMemQTables(cfg.Q_STATES, cfg.Q_ACTIONS)  # ctor requires sizes
+    transitions = InMemTransitions()
+    context = InMemContextService()
+
+    pred = MockPredictionService()
+
+    rl_deps = (
+        RLDeps.make()
+        .with_qtables(qtables)
+        .with_transitions(transitions)
+        .with_prediction(pred)
+        .with_context(context)
+        .with_rl(rl_service)
+        .ensure()
+    )
+
+    patient_id = 1
+    _, features = _sample_patient_and_features()
+    prob = float(pred.predict(features))
+    curr_state = _discretize(prob, getattr(cfg, "Q_STATES", 10))
+    prev_state = min(curr_state + 1, getattr(cfg, "Q_STATES", 10) - 1)
+
+    print("\n[rl] running call_rl_flow() …")
+    out = call_rl_flow(rl_deps, patient_id, prev_state, curr_state)
+    pprint(out)
+    return out
+

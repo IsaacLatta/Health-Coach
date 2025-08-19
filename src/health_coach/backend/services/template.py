@@ -1,4 +1,3 @@
-# template.py
 from abc import abstractmethod, ABC
 from typing import Any, Dict, List
 

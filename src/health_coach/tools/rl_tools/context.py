@@ -7,10 +7,8 @@ from crewai.tools import tool, BaseTool
 
 from health_coach.tools.actions import retrieve_action_index
 
-# for now just use the synthetic episodes
 EPISODE_DIR: Path = Path(__file__).resolve().parents[4]/"data"/"synthetic"/"train"
 
-# EPISODE_ID: int = random.randint(1, 2)
 EPISODE_ID: int = 0
 
 _Q_TABLE_PATH = Path(__file__).resolve().parents[4] / "models" / "q_table.npy"

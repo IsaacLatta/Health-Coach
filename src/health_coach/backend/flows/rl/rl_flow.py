@@ -1,100 +1,90 @@
 from pydantic import BaseModel
-from typing import Optional, Any
-import numpy as np
 from crewai.flow.flow import Flow, start, listen, and_
-from crewai.flow.persistence import persist
-from .rl_engine import SimpleQLearningEngine, RLEngine
-from .tools.exploration import get_all_funcs
 from .dependencies import RLDeps
+from health_coach.backend.stores.transitions import Transition
+from typing import Any, Optional, Union, Dict 
 
-import health_coach.config as cfg
+from pydantic import BaseModel
+from crewai.flow.flow import Flow, start, listen, and_
+from .dependencies import RLDeps
+from health_coach.backend.stores.transitions import Transition
 
 class RLState(BaseModel):
     class Config:
         arbitrary_types_allowed = True
-    
-    dependencies: Optional[RLDeps] = None
-    rl_engine: Optional[RLEngine] = None
-    prev_state: int = 0
-    curr_state: int = 0
+
+    deps: Optional[RLDeps] = None
+    patient_id: Optional[Union[int, str]] = None
+    prev_state: Optional[int] = None
+    curr_state: Optional[int] = None
+
     env_reward: float = 0.0
-    context: str = ""
-    action: int = 1
+    context_json: Any = None 
+    action: int = 0
     shaped_reward: float = 0.0
-    input: Any = None
+    result: Optional[Dict[str, Any]] = None
+
 
 class RLFlow(Flow[RLState]):
 
-    def __init__(self, dependencies, inputs, prev_state, cur_state):
-        super().__init__(RLState())
-        self.state.dependencies = dependencies
-        self.state.rl_engine = self.state.dependencies.engine # for convenience
-        self.state.inputs = inputs
-        self.state.prev_state = prev_state
-        self.state.curr_state = cur_state
+    def init(self, deps: RLDeps, patient_id, prev_state, curr_state):
+        self.state.deps = deps
+        self.state.patient_id = patient_id
+        self.state.prev_state = prev_state = prev_state
+        self.state.curr_state = curr_state
 
     @start()
     def compute_reward(self):
-        self.state.env_reward = self.state.rl_engine.compute_env_reward(self.state.prev_state, self.state.curr_state)
+        s = self.state
+        s.env_reward = float(s.deps.rl.env_reward(s.prev_state, s.curr_state))
+        return s.env_reward
 
     @listen(compute_reward)
     def make_context(self):
-        eng = self.state.rl_engine
-        self.state.context = eng.generate_context(
-            self.state.prev_state,
-            self.state.curr_state,
-            self.state.env_reward
-        )
-        return self.state.context
+        s = self.state
+        q = s.deps.qtables.get(s.patient_id)
+        s.context_json = s.deps.context.pre_action(s.prev_state, s.curr_state, s.env_reward, q)
+        return s.context_json
 
     @listen(make_context)
-    def shape_action(self):
-        self.state.action = self.state.rl_engine.shape_action(
-            self.state.prev_state,
-            self.state.curr_state,
-            self.state.env_reward,
-            self.state.context
-        )
+    def choose_action(self):
+        s = self.state
+        q = s.deps.qtables.get(s.patient_id)
+        s.action = int(s.deps.rl.select_action(s.prev_state, s.curr_state, s.env_reward, s.context_json, q))
+        return s.action
 
     @listen(make_context)
     def shape_reward(self):
-        self.state.shaped_reward = self.state.rl_engine.shape_reward(
-            self.state.prev_state,
-            self.state.curr_state,
-            self.state.env_reward,
-            self.state.context
-        )
-    
-    @listen(and_(shape_reward, shape_action))
-    def update_model(self):
-        self.state.rl_engine.save_state(
-            self.state.prev_state, 
-            self.state.action, 
-            self.state.shaped_reward, 
-            self.state.curr_state)
-        
-        return self.state.action
-    
+        self.state.shaped_reward = float(self.state.env_reward)
+        return self.state.shaped_reward
 
-def call_rl_flow(inputs):
-    # this func isnt async, it kicks off the task in the bg,  
-    # returns immediatly
+    @listen(and_(choose_action, shape_reward))
+    def update_q_and_context(self):
+        s = self.state
+        q = s.deps.qtables.get(s.patient_id)
+        qn = s.deps.rl.update(s.prev_state, s.action, s.shaped_reward, s.curr_state, q)
+        s.deps.qtables.save(s.patient_id, qn)
 
-    # here we can also make a prediction
-    # pull down the patient's last prediction
-    # or do it inside the flow
+        if s.deps.transitions:
+            s.deps.transitions.update(
+                s.patient_id,
+                Transition(
+                    prev_state=s.prev_state,
+                    curr_state=s.curr_state,
+                    reward=int(s.shaped_reward),
+                    action=int(s.action),
+                )
+            )
 
-    def reward_function(prev_state: int, current_state: int) -> float:
-        return prev_state - current_state
+        s.deps.context.post_action(s.prev_state, s.curr_state, s.shaped_reward, s.action, qn)
 
-    engine = SimpleQLearningEngine(
-        get_all_funcs(), 
-        reward_function,
-        cfg.ALPHA,
-        cfg.GAMMA
-        )
-        
-    prev_state = cur_state = 1234
-    flow = RLFlow(engine, inputs, prev_state, cur_state)
-    result = flow.kickoff()
-    return result
+        s.result = {"action": s.action, "reward": s.shaped_reward, "next_state": s.curr_state}
+        return s.result
+
+def call_rl_flow(deps: RLDeps, patient_id, prev_state: int, curr_state: int) -> dict:
+    flow = RLFlow()
+
+    print(f"\n\nStaring flow with state: {prev_state} {curr_state}\n\n")
+
+    flow.init(deps=deps, patient_id=patient_id, prev_state=prev_state, curr_state=curr_state)
+    return flow.kickoff()

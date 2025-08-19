@@ -1,8 +1,8 @@
 # dependencies.py
 from typing import Optional
 from dataclasses import dataclass
-import backend.services as svc
-import backend.stores as store
+import health_coach.backend.services as svc
+import health_coach.backend.stores as store
 
 @dataclass
 class ReportingDeps:
