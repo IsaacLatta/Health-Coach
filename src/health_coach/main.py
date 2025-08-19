@@ -53,7 +53,7 @@ def test_reporting():
     reporting_deps = (
         ReportingDeps.make()
         .with_configs(InMemConfigs())
-        .with_predict(MockPredictionService())
+        .with_prediction(MockPredictionService())
         .with_shap(MockSHAP())
         .with_templater(SimpleHTMLTemplate())
     )

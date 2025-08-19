@@ -41,8 +41,9 @@ class ReportingState(BaseModel):
     result: Optional[Dict[str, Any]] = None
 
 class ReportingFlow(Flow[ReportingState]):
-    def __init__(self, inputs: PatientInputs, dependencies: ReportingDeps):
-        super().__init__(ReportingState(inputs=inputs, dependencies=dependencies.ensure()))
+    def init(self, inputs: PatientInputs, dependencies: ReportingDeps):
+        self.state.inputs = inputs
+        self.state.dependencies = dependencies
 
     @start()
     def run(self):
@@ -97,5 +98,6 @@ class ReportingFlow(Flow[ReportingState]):
         return st.result
 
 def call_reporting_flow(inputs_json: Dict[str, Any], deps: ReportingDeps) -> Dict[str, Any]:
-    flow = ReportingFlow(PatientInputs.from_json(inputs_json), deps)
+    flow = ReportingFlow()
+    flow.init(PatientInputs.from_json(inputs_json), deps)
     return flow.run()
