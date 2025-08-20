@@ -1,13 +1,13 @@
+from typing import Any, Optional, Union, Dict
+import health_coach.config as cfg
 from pydantic import BaseModel
 from crewai.flow.flow import Flow, start, listen, and_
 from .dependencies import RLDeps
 from health_coach.backend.stores.transitions import Transition
-from typing import Any, Optional, Union, Dict 
 
-from pydantic import BaseModel
-from crewai.flow.flow import Flow, start, listen, and_
-from .dependencies import RLDeps
-from health_coach.backend.stores.transitions import Transition
+def _discretize(prob: float, bins: int) -> int:
+    s = int(float(prob) * bins)
+    return max(0, min(bins - 1, s))
 
 class RLState(BaseModel):
     class Config:
@@ -19,7 +19,7 @@ class RLState(BaseModel):
     curr_state: Optional[int] = None
 
     env_reward: float = 0.0
-    context_json: Any = None 
+    context_json: Any = None
     action: int = 0
     shaped_reward: float = 0.0
     result: Optional[Dict[str, Any]] = None
@@ -30,7 +30,7 @@ class RLFlow(Flow[RLState]):
     def init(self, deps: RLDeps, patient_id, prev_state, curr_state):
         self.state.deps = deps
         self.state.patient_id = patient_id
-        self.state.prev_state = prev_state = prev_state
+        self.state.prev_state = prev_state
         self.state.curr_state = curr_state
 
     @start()
@@ -77,14 +77,23 @@ class RLFlow(Flow[RLState]):
             )
 
         s.deps.context.post_action(s.prev_state, s.curr_state, s.shaped_reward, s.action, qn)
-
         s.result = {"action": s.action, "reward": s.shaped_reward, "next_state": s.curr_state}
         return s.result
 
+
 def call_rl_flow(deps: RLDeps, patient_id, prev_state: int, curr_state: int) -> dict:
     flow = RLFlow()
-
-    print(f"\n\nStaring flow with state: {prev_state} {curr_state}\n\n")
-
     flow.init(deps=deps, patient_id=patient_id, prev_state=prev_state, curr_state=curr_state)
     return flow.kickoff()
+
+
+def call_rl_flow_from_payload(deps: RLDeps, patient: Dict[str, Any], features: Dict[str, Any]) -> dict:
+    patient_id = patient.get("id") or patient.get("patient_id") or "-"
+    prob = float(deps.prediction.predict(features))
+    bins = int(getattr(cfg, "Q_STATES", 10))
+    curr_state = _discretize(prob, bins)
+
+    # NEED TO FIX THIS, PREV STATE SHOULD COME FROM DB
+    prev_state = curr_state 
+
+    return call_rl_flow(deps, patient_id, prev_state, curr_state)

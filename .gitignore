@@ -3,6 +3,9 @@
 env/
 venv/
 
+*.swp
+**.swp
+
 __pycache__/
 
 uv.lock
