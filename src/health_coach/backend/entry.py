@@ -5,6 +5,9 @@ from .app import create_app
 from .flows.reporting.reporting_flow import call_reporting_flow
 from .flows.rl.rl_flow import call_rl_flow  # kicks off RL step
 
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv(usecwd=True), override=False)
+
 app: Flask = create_app()
 executor = ThreadPoolExecutor(max_workers=4)
 

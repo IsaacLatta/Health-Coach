@@ -31,3 +31,9 @@ class ReportingDeps:
         self.templater = templater
         return self
 
+    def ensure(self) -> "ReportingDeps":
+        assert self.configs is not None, "ReportingDeps missing config store"
+        assert self.prediction is not None, "ReportingDeps missing prediction service"
+        assert self.shap is not None, "ReportingDeps missing shap service"
+        assert self.templater is not None, "ReportingDeps missing config store"
+        return self

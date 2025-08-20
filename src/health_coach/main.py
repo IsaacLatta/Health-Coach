@@ -45,9 +45,6 @@ def _sample_patient_and_features():
     return patient, features
 
 
-# ---------------------------
-# test: REPORTING FLOW
-# ---------------------------
 def test_reporting():
     """Build reporting deps (in-mem) and run the report flow once with a sample payload."""
     reporting_deps = (
@@ -102,7 +99,7 @@ def test_rl():
         verbose=getattr(cfg, "RL_VERBOSE", True),
     )
 
-    qtables = InMemQTables(cfg.Q_STATES, cfg.Q_ACTIONS)  # ctor requires sizes
+    qtables = InMemQTables(cfg.Q_STATES, cfg.Q_ACTIONS)
     transitions = InMemTransitions()
     context = InMemContextService()
 

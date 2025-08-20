@@ -1,12 +1,15 @@
 import os
 import json
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List
 
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv(usecwd=True), override=False)
 
 try:
     import requests
@@ -29,31 +32,30 @@ BADGE_CSS = """
 """
 st.markdown(BADGE_CSS, unsafe_allow_html=True)
 
-DEFAULT_BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
+def _clean_url(s: str) -> str:
+    # strip accidental quotes from .env like "http://127.0.0.1:8000"
+    return (s or "").strip().strip('"').strip("'")
+
+DEFAULT_BACKEND_URL = _clean_url(os.environ.get("BACKEND_URL", "http://localhost:8000"))
+
 SESSION_KEYS = {
     "features": [],
     "backend_url": DEFAULT_BACKEND_URL,
     "demo_mode": False,
     "last_run": None,
 }
-
 for key, default in SESSION_KEYS.items():
     if key not in st.session_state:
         st.session_state[key] = default
 
-
 def backend_url() -> str:
-    return st.session_state.get("backend_url", DEFAULT_BACKEND_URL).rstrip("/")
-
+    return _clean_url(st.session_state.get("backend_url", DEFAULT_BACKEND_URL)).rstrip("/")
 
 def risk_badge(label: str) -> str:
-    cls = {
-        "low": "badge-low",
-        "medium": "badge-medium",
-        "high": "badge-high",
-    }.get(str(label).lower(), "badge-medium")
+    cls = {"low": "badge-low", "medium": "badge-medium", "high": "badge-high"}.get(
+        str(label).lower(), "badge-medium"
+    )
     return f'<span class="badge {cls}">{label.title()}</span>'
-
 
 def post_json(url: str, payload: Dict[str, Any], timeout: int = 30) -> Dict[str, Any]:
     if st.session_state.get("demo_mode", False) or requests is None:
@@ -62,16 +64,17 @@ def post_json(url: str, payload: Dict[str, Any], timeout: int = 30) -> Dict[str,
     resp.raise_for_status()
     return resp.json()
 
-
 def mock_run_response(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Deterministic, lightweight mock for front-end dev without backend.
-    Returns structure compatible with /api/run or /api/report.
+    Returns structure compatible with /api/report.
     """
     patient = payload.get("patient", {})
     feats = payload.get("features", {})
-    numeric_vals = [float(v) for v in feats.values()
-                    if isinstance(v, (int, float)) or str(v).replace('.', '', 1).isdigit()]
-    avg = sum(numeric_vals)/len(numeric_vals) if numeric_vals else 0.42
+    numeric_vals = [
+        float(v) for v in feats.values()
+        if isinstance(v, (int, float)) or str(v).replace(".", "", 1).isdigit()
+    ]
+    avg = sum(numeric_vals) / len(numeric_vals) if numeric_vals else 0.42
     prob = max(0.01, min(0.99, (avg % 1.0)))
     label = "low" if prob < 0.33 else ("medium" if prob < 0.66 else "high")
 
@@ -90,7 +93,7 @@ def mock_run_response(payload: Dict[str, Any]) -> Dict[str, Any]:
         ]
 
     run_id = str(uuid4())
-    created_at = datetime.utcnow().isoformat() + "Z"
+    created_at = datetime.now(timezone.utc).isoformat()
     html = f"""
     <div style='font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;padding:16px'>
       <h2 style='margin-top:0'>Patient Risk Report</h2>
@@ -115,7 +118,6 @@ def mock_run_response(payload: Dict[str, Any]) -> Dict[str, Any]:
         "report": {"html": html, "created_at": created_at},
     }
 
-
 # --------- FIXED MOCK PAYLOAD FOR SERVER TESTING ---------
 SAMPLE_PATIENT = {
     "id": "P-0001",
@@ -133,8 +135,6 @@ SAMPLE_FEATURES = {
     "family_history": "yes",
     "activity_minutes_per_week": 60,
 }
-# ---------------------------------------------------------
-
 
 st.sidebar.header("Settings")
 st.sidebar.text_input("Backend URL", value=st.session_state["backend_url"], key="backend_url")
@@ -159,37 +159,49 @@ with st.container():
         p_gender = st.selectbox("Gender", ["Female", "Male", "Other", "Prefer not to say"])
 
     st.markdown("\n")
-    with st.expander("Patient Features (add as needed)", expanded=True):
-        st.caption("Add any model inputs here. Leave blank if unknown. You can add new rows dynamically.")
+    with st.expander("Patient Features (model inputs)", expanded=True):
+        st.caption("These match the regression model’s expected features.")
 
-        if not isinstance(st.session_state.features, list):
-            st.session_state.features = []
+        colA, colB, colC = st.columns(3)
 
-        remove_indices: List[int] = []
-        for idx, row in enumerate(st.session_state.features):
-            c1, c2, c3 = st.columns([1.2, 1.4, 0.3])
-            with c1:
-                name = st.text_input(
-                    f"Feature name {idx}",
-                    value=row.get("name", ""),
-                    key=f"feat_name_{idx}",
-                    placeholder="e.g., systolic_bp",
-                )
-            with c2:
-                value = st.text_input(
-                    f"Feature value {idx}",
-                    value=str(row.get("value", "")),
-                    key=f"feat_value_{idx}",
-                    placeholder="e.g., 126",
-                )
-            with c3:
-                if st.button("🗑️", key=f"feat_del_{idx}"):
-                    remove_indices.append(idx)
+        with colA:
+            f_age = st.number_input("Age", min_value=1, max_value=120, value=54, step=1)
+            f_sex = st.selectbox("Sex", ["Female", "Male"], index=0)
+            f_bp = st.number_input("Resting Blood Pressure (BP)", min_value=60, max_value=240, value=130)
+            f_chol = st.number_input("Cholesterol", min_value=80, max_value=400, value=220)
 
-            st.session_state.features[idx] = {"name": name, "value": value}
+        with colB:
+            f_fbs = st.text_input("Fasting Blood Sugar", value="no", help="yes/no or numeric; >120 → yes")
+            f_restecg = st.selectbox("Resting ECG (0–2)", [0,1,2], index=1)
+            f_thalach = st.number_input("Max HR (Thalach)", min_value=60, max_value=250, value=160)
+            f_exang = st.selectbox("Exercise Angina", ["no","yes"], index=0)
 
-        if remove_indices:
-            st.session_state.features = [r for i, r in enumerate(st.session_state.features) if i not in remove_indices]
+        with colC:
+            f_oldpeak = st.number_input("ST Depression (Oldpeak)", min_value=0.0, max_value=10.0, value=1.2, step=0.1)
+            f_cp = st.selectbox("Chest Pain Type", ["typical","atypical","non-anginal","asymptomatic"], index=3)
+            f_slope = st.selectbox("Slope of ST", ["downsloping","flat","upsloping"], index=1)
+            f_ca = st.selectbox("Number of vessels (Ca)", [0,1,2,3], index=0)
+            f_thal = st.selectbox("Thallium", ["normal","fixed defect","reversible defect"], index=0)
+
+        # for future use
+        model_features = {
+            "Age": f_age,
+            "Sex": f_sex,
+            "BP": f_bp,
+            "Cholesterol": f_chol,
+            "FBS over 120": f_fbs,
+            "EKG results": f_restecg,
+            "Max HR": f_thalach,
+            "Exercise angina": f_exang,
+            "ST depression": f_oldpeak,
+            "Chest pain type": f_cp,
+            "Slope of ST": f_slope,
+            "Number of vessels fluro": f_ca,
+            "Thallium": f_thal,
+        }
+
+        # if remove_indices:
+        #     st.session_state.features = [r for i, r in enumerate(st.session_state.features) if i not in remove_indices]
 
         if st.button("Add feature"):
             st.session_state.features.append({"name": "", "value": ""})
@@ -205,10 +217,8 @@ with st.container():
 
 result: Dict[str, Any] = {}
 if run_clicked:
-    payload = {
-        "patient": SAMPLE_PATIENT,
-        "features": SAMPLE_FEATURES,
-    }
+    # For now we intentionally send the fixed SAMPLE payload to the backend
+    payload = {"patient": SAMPLE_PATIENT, "features": SAMPLE_FEATURES}
     with st.spinner("Running risk report…"):
         try:
             result = post_json(f"{backend_url()}/api/report", payload)
@@ -226,10 +236,7 @@ if show:
 
     c1, c2, c3 = st.columns([1, 1, 2])
     with c1:
-        if prob is not None:
-            st.metric("Probability", f"{prob:.1%}")
-        else:
-            st.metric("Probability", "–")
+        st.metric("Probability", f"{(prob or 0.0):.1%}" if prob is not None else "–")
     with c2:
         st.markdown(risk_badge(label), unsafe_allow_html=True)
     with c3:
@@ -241,6 +248,13 @@ if show:
         df = pd.DataFrame(shap_items)
         cols = [c for c in ["feature", "value", "phi", "reason"] if c in df.columns]
         df = df[cols]
+        dtype_map = {}
+        if "feature" in df.columns: dtype_map["feature"] = "string"
+        if "reason"  in df.columns: dtype_map["reason"]  = "string"
+        if "value"   in df.columns: dtype_map["value"]   = "string"
+        if "phi"     in df.columns: dtype_map["phi"]     = "float64"
+        if dtype_map:
+            df = df.astype(dtype_map).fillna("")
         st.dataframe(df, use_container_width=True, hide_index=True)
 
     report = show.get("report", {})
@@ -250,13 +264,8 @@ if show:
             components.html(html, height=420, scrolling=True)
 
         out_id = SAMPLE_PATIENT["id"]
-        fname = f"risk_report_{out_id}_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.html"
-        st.download_button(
-            label="⬇️ Download report (HTML)",
-            data=html,
-            file_name=fname,
-            mime="text/html",
-        )
+        fname = f"risk_report_{out_id}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.html"
+        st.download_button(label="⬇️ Download report (HTML)", data=html, file_name=fname, mime="text/html")
 
     with st.expander("Agent chat (coming soon)"):
         st.info("Chat agent will summarize trends and justify configuration decisions. (Not wired yet.)")
