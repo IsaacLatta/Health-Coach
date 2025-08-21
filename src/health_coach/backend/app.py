@@ -1,4 +1,3 @@
-# app_factory.py
 from flask import Flask
 
 import health_coach.config as cfg
@@ -13,19 +12,19 @@ from .stores.qtable import SQLiteQTables
 from .flows.rl.dependencies import RLDeps
 from .services.context import InMemContextService
 from .services.rl import QLearningRLService
+from .flows.rl.tools.explorer_factories import get_factories
 
-from .flows.rl.tools.explorer_factories import get_factories 
+from .flows.insights.dependencies import InsightsDeps
 
 def create_app() -> Flask:
     app = Flask(__name__)
 
-
     reporting_deps = (
         ReportingDeps.make()
         .with_configs(SQLiteConfigs())
-        .with_prediction(SklearnPicklePredictionService()) 
-        .with_shap(MockSHAP())                          
-        .with_templater(VerboseTemplate())      
+        .with_prediction(SklearnPicklePredictionService())
+        .with_shap(MockSHAP())
+        .with_templater(VerboseTemplate())
         .ensure()
     )
 
@@ -61,6 +60,17 @@ def create_app() -> Flask:
         .ensure()
     )
 
+    insights_deps = (
+        InsightsDeps.make()
+        .with_prediction(SklearnPicklePredictionService())
+        .with_configs(SQLiteConfigs())
+        .with_transitions(SQLiteTransitions())
+        .with_qtables(SQLiteQTables(cfg.Q_STATES, cfg.Q_ACTIONS))
+        .with_context(InMemContextService()) 
+        .ensure()
+    )
+
     app.config["REPORTING_DEPS"] = reporting_deps
     app.config["RL_DEPS"] = rl_deps
+    app.config["INSIGHTS_DEPS"] = insights_deps
     return app

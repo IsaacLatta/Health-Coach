@@ -5,18 +5,21 @@ import health_coach.config as cfg
 
 from health_coach.backend.flows.reporting.reporting_flow import call_reporting_flow
 from health_coach.backend.flows.reporting.dependencies import ReportingDeps
-from health_coach.backend.services.prediction import MockPredictionService
+from health_coach.backend.services.prediction import MockPredictionService, SklearnPicklePredictionService
 from health_coach.backend.services.shap import MockSHAP
 from health_coach.backend.services.template import SimpleHTMLTemplate
-from health_coach.backend.stores.config import InMemConfigs
+from health_coach.backend.stores.config import InMemConfigs, SQLiteConfigs
 
 from health_coach.backend.flows.rl.rl_flow import call_rl_flow
 from health_coach.backend.flows.rl.dependencies import RLDeps
+from health_coach.backend.flows.insights.dependencies import InsightsDeps
+from health_coach.backend.flows.insights.insights_flow import call_insights_flow
+
 from health_coach.backend.services.context import InMemContextService
 from health_coach.backend.services.rl import QLearningRLService
 
-from health_coach.backend.stores.qtable import InMemQTables
-from health_coach.backend.stores.transitions import InMemTransitions
+from health_coach.backend.stores.qtable import InMemQTables, SQLiteQTables
+from health_coach.backend.stores.transitions import InMemTransitions, SQLiteTransitions
 from health_coach.backend.flows.rl.tools.explorer_factories import get_factories
 
 
@@ -126,3 +129,30 @@ def test_rl():
     pprint(out)
     return out
 
+def test_insights():
+
+    deps = (
+    InsightsDeps.make()
+    .with_prediction(SklearnPicklePredictionService())   # :contentReference[oaicite:13]{index=13}
+    .with_configs(SQLiteConfigs())                        # :contentReference[oaicite:14]{index=14}
+    .with_transitions(SQLiteTransitions())                # :contentReference[oaicite:15]{index=15}
+    .with_qtables(SQLiteQTables(states=cfg.Q_STATES, actions=cfg.Q_ACTIONS))  # :contentReference[oaicite:16]{index=16}
+    .with_context(InMemContextService())                  # :contentReference[oaicite:17]{index=17}
+    # .with_templater(SimpleHTMLTemplate())              # optional, if you want HTML here
+    .ensure()
+    )
+
+    payload = {
+    "id": "P-0001",
+    "name": "Jane Doe",
+    "age": 54,
+    "gender": "Female",
+    "features": {...}   # same dict you send to /api/report
+    }
+
+    patient, features = _sample_patient_and_features()
+    payload = {**patient, "features": features}
+    out = call_insights_flow(payload, deps)
+    from pprint import pprint
+    pprint(out.get("summary"))
+    return out

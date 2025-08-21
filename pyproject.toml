@@ -25,7 +25,7 @@ health_coach = "health_coach.main:run"
 run_crew = "health_coach.main:run"
 train = "health_coach.main:test_reporting"
 replay = "health_coach.main:replay"
-test = "health_coach.main:test_rl"
+test = "health_coach.main:test_insights"
 report = "health_coach.main:test_reporting"
 rl = "health_coach.main:test_rl"
 

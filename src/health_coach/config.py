@@ -29,7 +29,6 @@ EPISODE_LENGTH = 5
 TRAIN_FRACTION: float = 0.8
 EVAL_FRACTION: float = 0.2
 
-# Global hyperparams
 ALPHA: float = 0.5
 GAMMA: float = 0.5
 SHOULD_SAMPLE_HYPERPARAMS: bool = True

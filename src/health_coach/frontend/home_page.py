@@ -118,7 +118,6 @@ def mock_run_response(payload: Dict[str, Any]) -> Dict[str, Any]:
         "report": {"html": html, "created_at": created_at},
     }
 
-# --------- FIXED MOCK PAYLOAD FOR SERVER TESTING ---------
 SAMPLE_PATIENT = {
     "id": "P-0001",
     "name": "Jane Doe",
@@ -273,6 +272,43 @@ if show:
 
     with st.expander("History & trends (coming soon)"):
         st.info("We will show recent visits, risk trajectory, and action/reward transitions.")
+
+    with st.expander("RL Insights (agent)", expanded=False):
+        try:
+            insights = post_json(f"{backend_url()}/api/insights", {
+                "patient": SAMPLE_PATIENT,
+                "features": SAMPLE_FEATURES,
+            })
+            metrics = insights.get("metrics", {})
+            summary = insights.get("summary", {})
+
+            cols = st.columns(3)
+            with cols[0]:
+                st.metric("Margin → moderate", f"{metrics.get('margin_to_moderate', 0.0):+.1%}")
+            with cols[1]:
+                st.metric("Margin → high", f"{metrics.get('margin_to_high', 0.0):+.1%}")
+            with cols[2]:
+                vol = metrics.get("volatility", "low")
+                vv  = metrics.get("volatility_value", 0.0)
+                st.metric("Volatility", f"{vol} ({vv:.3f})")
+
+            action_stats = metrics.get("action_stats", [])
+            if action_stats:
+                st.markdown("**Action → reward (recent)**")
+                df_actions = pd.DataFrame(action_stats)
+                order = [c for c in ["action", "count", "mean_reward"] if c in df_actions.columns]
+                df_actions = df_actions[order].astype({"action":"int64","count":"int64","mean_reward":"float64"})
+                st.dataframe(df_actions, use_container_width=True, hide_index=True)
+
+            if summary.get("narrative"):
+                st.markdown("**Narrative**")
+                st.write(summary["narrative"])
+            if summary.get("bullets"):
+                st.markdown("**Bullets**")
+                for b in summary["bullets"]:
+                    st.markdown(f"- {b}")
+        except Exception as e:
+            st.info(f"Insights not available yet. ({e})")
 
 st.markdown("<hr style='opacity:0.2'/>", unsafe_allow_html=True)
 st.caption("Prototype for demo purposes — the RL system tunes reporting parameters server-side; clinicians see the report only.")
