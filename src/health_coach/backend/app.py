@@ -2,14 +2,14 @@
 from flask import Flask
 
 import health_coach.config as cfg
-from .services.prediction import MockPredictionService, SklearnPicklePredictionService
+from .services.prediction import SklearnPicklePredictionService
 from .services.shap import MockSHAP
-from .services.template import SimpleHTMLTemplate, VerboseTemplate
-from .stores.config import InMemConfigs
+from .services.template import VerboseTemplate
+from .stores.config import SQLiteConfigs
 from .flows.reporting.dependencies import ReportingDeps
 
-from .stores.transitions import InMemTransitions
-from .stores.qtable import InMemQTables
+from .stores.transitions import SQLiteTransitions
+from .stores.qtable import SQLiteQTables
 from .flows.rl.dependencies import RLDeps
 from .services.context import InMemContextService
 from .services.rl import QLearningRLService
@@ -22,20 +22,12 @@ def create_app() -> Flask:
 
     reporting_deps = (
         ReportingDeps.make()
-        .with_configs(InMemConfigs())
+        .with_configs(SQLiteConfigs())
         .with_prediction(SklearnPicklePredictionService()) 
         .with_shap(MockSHAP())                          
         .with_templater(VerboseTemplate())      
+        .ensure()
     )
-
-    # reporting_deps = (
-    #     ReportingDeps.make()
-    #     .with_configs(InMemConfigs())
-    #     .with_prediction(MockPredictionService())
-    #     .with_shap(MockSHAP())
-    #     .with_templater(SimpleHTMLTemplate())
-    #     .ensure()
-    # )
 
     factories = get_factories()
     explorers = [
@@ -60,8 +52,8 @@ def create_app() -> Flask:
 
     rl_deps = (
         RLDeps.make()
-        .with_qtables(InMemQTables(cfg.Q_STATES, cfg.Q_ACTIONS))
-        .with_transitions(InMemTransitions())
+        .with_qtables(SQLiteQTables(cfg.Q_STATES, cfg.Q_ACTIONS))
+        .with_transitions(SQLiteTransitions())
         .with_prediction(SklearnPicklePredictionService())
         .with_context(InMemContextService())
         .with_rl(rl_service)

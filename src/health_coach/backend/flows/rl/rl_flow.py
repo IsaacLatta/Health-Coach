@@ -86,7 +86,6 @@ def call_rl_flow(deps: RLDeps, patient_id, prev_state: int, curr_state: int) -> 
     flow.init(deps=deps, patient_id=patient_id, prev_state=prev_state, curr_state=curr_state)
     return flow.kickoff()
 
-
 def call_rl_flow_from_payload(deps: RLDeps, patient: Dict[str, Any], features: Dict[str, Any]) -> dict:
     patient_id = patient.get("id") or patient.get("patient_id") or "-"
     prob = float(deps.prediction.predict(features))
