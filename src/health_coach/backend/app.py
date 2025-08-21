@@ -2,7 +2,7 @@ from flask import Flask
 
 import health_coach.config as cfg
 from .services.prediction import SklearnPicklePredictionService
-from .services.shap import MockSHAP
+from .services.shap import MockSHAP, SklearnSHAP
 from .services.template import VerboseTemplate
 from .stores.config import SQLiteConfigs
 from .flows.reporting.dependencies import ReportingDeps
@@ -23,7 +23,7 @@ def create_app() -> Flask:
         ReportingDeps.make()
         .with_configs(SQLiteConfigs())
         .with_prediction(SklearnPicklePredictionService())
-        .with_shap(MockSHAP())
+        .with_shap(SklearnSHAP())
         .with_templater(VerboseTemplate())
         .ensure()
     )
