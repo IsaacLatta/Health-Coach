@@ -57,6 +57,7 @@ def create_app() -> Flask:
         .with_prediction(SklearnPicklePredictionService())
         .with_context(InMemContextService())
         .with_rl(rl_service)
+        .with_configs(SQLiteConfigs())
         .ensure()
     )
 

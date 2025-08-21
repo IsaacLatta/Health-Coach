@@ -87,12 +87,44 @@ def call_rl_flow(deps: RLDeps, patient_id, prev_state: int, curr_state: int) -> 
     return flow.kickoff()
 
 def call_rl_flow_from_payload(deps: RLDeps, patient: Dict[str, Any], features: Dict[str, Any]) -> dict:
+    """
+    1) Predict probability from features (backend-owned).
+    2) Discretize -> curr_state.
+    3) Pull last transition -> prev_state (else prev=curr).
+    4) Run RL flow (select action, update Q, write transition).
+    5) Apply action to patient's reporting config and persist.
+    """
     patient_id = patient.get("id") or patient.get("patient_id") or "-"
+
     prob = float(deps.prediction.predict(features))
     bins = int(getattr(cfg, "Q_STATES", 10))
     curr_state = _discretize(prob, bins)
 
-    # NEED TO FIX THIS, PREV STATE SHOULD COME FROM DB
-    prev_state = curr_state 
+    prev_state = curr_state
+    if deps.transitions:
+        try:
+            last = deps.transitions.get_last(patient_id)
+            if last:
+                prev_state = int(getattr(last, "curr_state", curr_state))
+        except Exception as e:
+            print(f"Exception: {e}")
+            pass  # fallback to current state
 
-    return call_rl_flow(deps, patient_id, prev_state, curr_state)
+    result = call_rl_flow(deps, patient_id, prev_state, curr_state)
+
+    try:
+        raw_idx = int(result.get("action", 0))
+        safe_idx = int(raw_idx) % int(getattr(cfg, "Q_ACTIONS", 6))
+
+        if hasattr(deps, "configs") and deps.configs is not None:
+            print("\nWritiing configs\n")
+            current_cfg = deps.configs.get(patient_id)  # returns defaults if missing
+            new_cfg = cfg.apply_config_action(current_cfg, safe_idx)
+            deps.configs.save(patient_id, new_cfg)
+        else:
+            print("\nConfigs is none\n")
+    except Exception as e:
+        print(f"Exception: {e}")
+        pass
+
+    return result

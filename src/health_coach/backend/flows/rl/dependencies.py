@@ -11,7 +11,7 @@ from health_coach.backend.services.rl import RLService
 class RLDeps:
     qtables: Optional[store.QTableStore] = None
     transitions: Optional[store.TransitionStore] = None
-
+    configs: Optional[store.ConfigStore] = None
     prediction: Optional[svc.PredictionService] = None
     context: Optional[ContextService] = None
     rl: Optional[RLService] = None
@@ -40,8 +40,13 @@ class RLDeps:
         self.rl = rl
         return self
 
+    def with_configs(self, configs: store.ConfigStore) -> "RLDeps":
+        self.configs = configs
+        return self
+
     def ensure(self) -> "RLDeps":
         assert self.qtables is not None, "RLDeps missing qtables store"
         assert self.context is not None, "RLDeps missing ContextService"
         assert self.rl is not None, "RLDeps missing RLService"
+        assert self.rl is not None, "RLDeps missing config store"
         return self

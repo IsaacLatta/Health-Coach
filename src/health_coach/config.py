@@ -1,4 +1,5 @@
 import random
+import os
 
 # LLM_MODEL: str = "ollama/gemma3:latest"
 # LLM_MODEL: str = "ollama/qwen3:1.7b"
@@ -6,8 +7,19 @@ LLM_MODEL: str = "ollama/qwen3:4b"
 LLM_BASE_URL: str = "http://192.168.1.202:80"
 # LLM_BASE_URL: str = "http://127.0.0.1:11434"
 
+ACTIONS = [
+    "inc_top_k",       # 0
+    "dec_top_k",       # 1
+    "lower_moderate",  # 2
+    "raise_moderate",  # 3
+    "lower_high",      # 4
+    "raise_high",      # 5
+]
+
 Q_STATES: int = 30
-Q_ACTIONS: int = 7
+# Q_ACTIONS: int = 7
+Q_ACTIONS = int(os.getenv("Q_ACTIONS", "6"))
+
 
 STATE_TO_NOISE_FACTOR: float = 0.1
 NOISE_STD: float = (1 / Q_STATES) * STATE_TO_NOISE_FACTOR
@@ -77,3 +89,51 @@ def print_config() -> None:
     print(f"    Thompson σ = {THOMPSON_SIGMA:.4f}")
     print(f"    UCB c = {UCB_C:.4f}")
     print()
+
+DEFAULT_REPORT_CFG = {
+    "moderate": float(os.getenv("THRESH_MODERATE", "0.33")),
+    "high":     float(os.getenv("THRESH_HIGH", "0.66")),
+    "top_k":    int(os.getenv("REPORT_TOP_K", "5")),
+}
+
+def default_patient_config() -> dict:
+    """Return a fresh copy of the default report config."""
+    return dict(DEFAULT_REPORT_CFG)
+
+def _clamp(v: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, v))
+
+def apply_config_action(cfg: dict, action_idx: int) -> dict:
+    n = max(1, Q_ACTIONS)
+    a = int(action_idx) % n
+
+    new = dict(cfg or DEFAULT_REPORT_CFG)
+    step_k = int(os.getenv("TOP_K_STEP", "1"))
+    step_t = float(os.getenv("THRESH_STEP", "0.02"))
+
+    k  = int(new.get("top_k", DEFAULT_REPORT_CFG["top_k"]))
+    m  = float(new.get("moderate", DEFAULT_REPORT_CFG["moderate"]))
+    hi = float(new.get("high", DEFAULT_REPORT_CFG["high"]))
+
+    if a == 0:  # inc_top_k
+        k = _clamp(k + step_k, 1, 10)
+    elif a == 1:  # dec_top_k
+        k = _clamp(k - step_k, 1, 10)
+    elif a == 2:  # lower_moderate
+        m = _clamp(m - step_t, 0.0, 0.98)
+        m = min(m, hi - 0.01)
+    elif a == 3:  # raise_moderate
+        m = _clamp(m + step_t, 0.0, 0.98)
+        m = min(m, hi - 0.01)
+    elif a == 4:  # lower_high
+        hi = _clamp(hi - step_t, 0.01, 0.99)
+        hi = max(hi, m + 0.01)
+    elif a == 5:  # raise_high
+        hi = _clamp(hi + step_t, 0.01, 0.99)
+        hi = max(hi, m + 0.01)
+
+    new["top_k"] = int(k)
+    new["moderate"] = float(m)
+    new["high"] = float(hi)
+    print(f"\nGenerated new config: {new}\n")
+    return new
