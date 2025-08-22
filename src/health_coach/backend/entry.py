@@ -4,6 +4,7 @@ from .app import create_app
 from .flows.reporting.reporting_flow import call_reporting_flow
 from .flows.rl.rl_flow import call_rl_flow_from_payload
 from .flows.insights.insights_flow import call_insights_flow  # NEW
+from .flows.chat.chat_flow import call_chat_flow
 
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv(usecwd=True), override=False)
@@ -83,3 +84,17 @@ def api_run():
 
     result = call_reporting_flow(payload, deps_r)
     return jsonify({"rl_dispatched": True, **result}), 200
+
+@app.post("/api/chat")
+def api_chat():
+    data = request.get_json(force=True) or {}
+    patient = data.get("patient", {})
+    features = data.get("features")  # optional
+    report   = data.get("report")    # optional (send the one you just rendered)
+    deps     = current_app.config["CHAT_DEPS"]
+    pid      = patient.get("id", "-1")
+    msg      = data.get("message", "")
+
+    out = call_chat_flow(deps, pid, msg, features=features, report=report)
+    return jsonify(out), 200
+

@@ -17,26 +17,12 @@ class TransitionStore(ABC):
         ...
 
     @abstractmethod
-    def update(self, id: int, transition: Transition):
+    def recent(self, id: int, limit: int):
         ...
 
-class InMemTransitions(TransitionStore):
-    def __init__(self):
-        self._transitions: Dict[int, List[Transition]] = {}
-
-    def get_last(self, id: int):
-        patient_trans = self._transitions.get(id)
-        if patient_trans is not None:
-            return patient_trans[-1]
-        else:
-            return None
-
+    @abstractmethod
     def update(self, id: int, transition: Transition):
-        patient_trans = self._transitions.get(id)
-        if patient_trans is None:
-            self._transitions[id] = [transition]
-        else:
-            patient_trans.append(transition)
+        ...
 
 class SQLiteTransitions(TransitionStore):
     def __init__(self,
@@ -98,3 +84,25 @@ class SQLiteTransitions(TransitionStore):
                  float(transition.reward), int(transition.curr_state),
                  None if prob is None else float(prob)),
             )
+
+    def recent(self, patient_id: str, limit: int = 25) -> List[Dict[str, Any]]:
+        """Return up to `limit` most recent transitions as a list of dicts (oldest→newest)."""
+        with self._connect() as con:
+            cur = con.execute(
+                """
+                SELECT ts, prev_state, action, reward, curr_state, prob
+                FROM transitions
+                WHERE patient_id = ?
+                ORDER BY ts ASC
+                """,
+                (str(patient_id),),
+            )
+            rows = cur.fetchall()
+
+        out = [
+            {"ts": r[0], "prev": r[1], "action": r[2], "reward": r[3], "cur": r[4], "prob": r[5]}
+            for r in rows
+        ]
+        return out[-limit:]
+
+

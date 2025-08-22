@@ -43,6 +43,9 @@ SESSION_KEYS = {
     "backend_url": DEFAULT_BACKEND_URL,
     "demo_mode": False,
     "last_run": None,
+    # chat state (added)
+    "chat_history": [],
+    "chat_open": False,
 }
 for key, default in SESSION_KEYS.items():
     if key not in st.session_state:
@@ -142,7 +145,7 @@ st.sidebar.checkbox("Demo mode (no backend)", value=st.session_state["demo_mode"
 with st.sidebar.expander("Hooks / Extensibility", expanded=False):
     st.markdown("- Agent chat (coming soon)\n- Patient history & trends\n- PDF export\n- Auth (role: doctor)")
 
-st.title("🩺 Agent Health Risk — Prototype")
+st.title("🫀 Agent Advisor")
 st.caption("Demo UI: doctor enters patient details + features → backend runs risk report + agentic RL (config tuning), then returns a readable report.")
 
 with st.container():
@@ -182,7 +185,6 @@ with st.container():
             f_ca = st.selectbox("Number of vessels (Ca)", [0,1,2,3], index=0)
             f_thal = st.selectbox("Thallium", ["normal","fixed defect","reversible defect"], index=0)
 
-        # for future use
         model_features = {
             "Age": f_age,
             "Sex": f_sex,
@@ -199,9 +201,6 @@ with st.container():
             "Thallium": f_thal,
         }
 
-        # if remove_indices:
-        #     st.session_state.features = [r for i, r in enumerate(st.session_state.features) if i not in remove_indices]
-
         if st.button("Add feature"):
             st.session_state.features.append({"name": "", "value": ""})
 
@@ -212,11 +211,13 @@ with st.container():
     with reset_col:
         if st.button("Reset form"):
             st.session_state.features = []
+            st.session_state.chat_history = []
+            st.session_state.chat_open = False
+            st.session_state.last_run = None
             st.experimental_rerun()
 
 result: Dict[str, Any] = {}
 if run_clicked:
-    # For now we intentionally send the fixed SAMPLE payload to the backend
     payload = {"patient": SAMPLE_PATIENT, "features": SAMPLE_FEATURES}
     with st.spinner("Running risk report…"):
         try:
@@ -266,9 +267,50 @@ if show:
         fname = f"risk_report_{out_id}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.html"
         st.download_button(label="⬇️ Download report (HTML)", data=html, file_name=fname, mime="text/html")
 
-    with st.expander("Agent chat (coming soon)"):
-        st.info("Chat agent will summarize trends and justify configuration decisions. (Not wired yet.)")
-        st.text_input("Message", placeholder="Ask about this patient's trend…", disabled=True)
+    exp_open = st.session_state.chat_open or bool(st.session_state.chat_history)
+    with st.expander("Agent chat", expanded=exp_open):
+        for turn in st.session_state.chat_history:
+            role = turn.get("role", "assistant")
+            text = turn.get("text", "")
+            with st.chat_message(role):
+                st.markdown(text)
+
+        user_msg = st.chat_input("Ask about this patient's risk, drivers, or RL behavior…")
+        if user_msg:
+            st.session_state.chat_open = True  # keep panel open on subsequent reruns
+            st.session_state.chat_history.append({"role": "user", "text": user_msg})
+            with st.chat_message("user"):
+                st.markdown(user_msg)
+
+            try:
+                payload = {
+                    "patient": SAMPLE_PATIENT,
+                    "features": SAMPLE_FEATURES,
+                    "report": show,    # send current report context to backend
+                    "message": user_msg,
+                }
+                resp = post_json(f"{backend_url()}/api/chat", payload)
+                reply = resp.get("reply", {}) if isinstance(resp, dict) else {}
+                text = (
+                    (reply.get("answer") if isinstance(reply, dict) else None)
+                    or (resp.get("text") if isinstance(resp, dict) else None)
+                    or "No answer."
+                )
+                bullets = reply.get("bullets", []) if isinstance(reply, dict) else []
+                used = reply.get("used_signals", []) if isinstance(reply, dict) else []
+
+                st.session_state.chat_history.append({"role": "assistant", "text": text})
+                with st.chat_message("assistant"):
+                    st.markdown(text)
+                    for b in bullets:
+                        st.markdown(f"- {b}")
+                    if used:
+                        st.caption("Signals used: " + ", ".join(str(u) for u in used))
+            except Exception as e:
+                err = f"Chat failed: {e}"
+                st.session_state.chat_history.append({"role": "assistant", "text": err})
+                with st.chat_message("assistant"):
+                    st.error(err)
 
     with st.expander("History & trends (coming soon)"):
         st.info("We will show recent visits, risk trajectory, and action/reward transitions.")

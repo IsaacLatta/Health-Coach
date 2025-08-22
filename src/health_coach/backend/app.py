@@ -10,6 +10,8 @@ from .flows.reporting.dependencies import ReportingDeps
 from .stores.transitions import SQLiteTransitions
 from .stores.qtable import SQLiteQTables
 from .flows.rl.dependencies import RLDeps
+from .flows.chat.dependencies import ChatDeps
+
 from .services.context import InMemContextService
 from .services.rl import QLearningRLService
 from .flows.rl.tools.explorer_factories import get_factories
@@ -70,7 +72,19 @@ def create_app() -> Flask:
         .ensure()
     )
 
+    chat_deps = (
+        ChatDeps.make()
+        .with_prediction(SklearnPicklePredictionService())
+        .with_shap(SklearnSHAP())
+        .with_configs(SQLiteConfigs())
+        .with_qtables(SQLiteQTables(cfg.Q_STATES, cfg.Q_ACTIONS))
+        .with_transitions(SQLiteTransitions())
+        .with_context(InMemContextService())
+        .ensure()
+    )
+
     app.config["REPORTING_DEPS"] = reporting_deps
     app.config["RL_DEPS"] = rl_deps
     app.config["INSIGHTS_DEPS"] = insights_deps
+    app.config["CHAT_DEPS"] = chat_deps
     return app
