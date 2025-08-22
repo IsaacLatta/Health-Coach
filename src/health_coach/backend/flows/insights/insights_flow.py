@@ -117,7 +117,7 @@ class RLInsightsFlow(Flow[InsightsState]):
             reward = float(recent[0]["reward"])
             q = dep.qtables.get(pid)
             try:
-                ctx_json = dep.context.pre_action(prev_state, curr_state, reward, q)
+                ctx_json = dep.context.pre_action(self.inputs.id, prev_state, curr_state, reward, q)
             except Exception:
                 ctx_json = None
 

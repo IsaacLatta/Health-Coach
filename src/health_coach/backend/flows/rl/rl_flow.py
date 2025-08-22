@@ -43,7 +43,7 @@ class RLFlow(Flow[RLState]):
     def make_context(self):
         s = self.state
         q = s.deps.qtables.get(s.patient_id)
-        s.context_json = s.deps.context.pre_action(s.prev_state, s.curr_state, s.env_reward, q)
+        s.context_json = s.deps.context.pre_action(s.patient_id, s.prev_state, s.curr_state, s.env_reward, q)
         return s.context_json
 
     @listen(make_context)
@@ -76,7 +76,7 @@ class RLFlow(Flow[RLState]):
                 )
             )
 
-        s.deps.context.post_action(s.prev_state, s.curr_state, s.shaped_reward, s.action, qn)
+        s.deps.context.post_action(s.patient_id, s.prev_state, s.curr_state, s.shaped_reward, s.action, qn)
         s.result = {"action": s.action, "reward": s.shaped_reward, "next_state": s.curr_state}
         return s.result
 
