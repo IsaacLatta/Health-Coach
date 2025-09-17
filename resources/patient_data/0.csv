@@ -1,2 +1,0 @@
-Age,Sex,Chest pain type,BP,Cholesterol,FBS over 120,EKG results,Max HR,Exercise angina,ST depression,Slope of ST,Number of vessels fluro,Thallium,Heart Disease,Id,Date,Prediction,State,Action,Reward,Eval_Date,Eval_Prediction,Next_State,True_Outcome
-72,0,4,130,250,0,1,140,1,1.4,2,1,3,0,0,2025-06-10,0.45,4,DECREASE_MODERATE_THRESHOLD, , , , ,   

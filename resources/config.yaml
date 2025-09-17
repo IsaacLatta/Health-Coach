@@ -1,5 +1,0 @@
-thresholds:
-  moderate: 0.33
-  high: 0.66
-explanation:
-  top_k: 5
