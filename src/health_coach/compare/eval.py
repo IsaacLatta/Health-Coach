@@ -1,12 +1,13 @@
 import statistics
 import numpy as np
 import pandas as pd
+import json
 from typing import Dict, List, Callable, Any
 from pathlib import Path
 from datetime import datetime
 
 from health_coach.compare.env import DriftOfflineEnvironment
-import health_coach.rl_data_gen.drift as drift
+import health_coach.compare.rl_data_gen.drift as drift
 
 import health_coach.config as cfg
 
@@ -174,4 +175,3 @@ def evaluate_metrics(
 
         "visit_counts": visit_counts,
     }
-  

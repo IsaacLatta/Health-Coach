@@ -3,33 +3,37 @@ import numpy as np
 import os
 import threading
 import builtins
+import json
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from typing import Callable, List, Dict, Any
 import health_coach.config as cfg
-import health_coach.rl_data_gen.generate as gen
+import health_coach.compare.rl_data_gen.generate as gen
 
 from health_coach.compare.train import train_q_table
 from health_coach.compare.eval import evaluate_metrics
-from health_coach.compare.explorer_factories import get_factories
+from health_coach.backend.flows.rl.tools.explorer_factories import get_factories
 
 _print_lock = threading.Lock()
 def safe_print(*args, **kwargs):
     with _print_lock:
         builtins.print(*args, **kwargs)
 
-
 class ExplorerTuner:
     def __init__(
         self,
         name: str,
+        alpha: float,
+        gamma: float,
         factory: Callable[[float], Callable[[int, np.ndarray], int]],
         param_name: str,
         param_range: tuple[float, float]
     ):
-        self.name        = name
-        self.factory     = factory
-        self.param_name  = param_name
+        self.name = name
+        self.alpha = alpha
+        self.gamma = gamma
+        self.factory = factory
+        self.param_name = param_name
         self.param_range = param_range
 
     def sample(self) -> float:
@@ -52,7 +56,7 @@ class ExplorerTuner:
                 random.seed(seed)
                 np.random.seed(seed)
 
-                q_table, _  = train_q_table(fn, train_eps,  cfg.ALPHA, cfg.GAMMA)
+                q_table, _  = train_q_table(fn, train_eps,  self.alpha, self.gamma)
                 metrics = evaluate_metrics(q_table, val_eps)
                 scores.append(metrics["mean_normalized_capture_ratio"])
 
@@ -86,36 +90,48 @@ def tune_explorers():
     tuners = [
         ExplorerTuner(
             name="epsilon_greedy",
+            alpha=cfg.EPSILON_GREEDY_HYPERPARAMS[0],
+            gamma=cfg.EPSILON_GREEDY_HYPERPARAMS[1],
             factory=factories["epsilon_greedy_fn"],
             param_name="decay_rate",
             param_range=(0.995, 0.9999)
         ),
         ExplorerTuner(
             name="softmax",
+            alpha=cfg.SOFTMAX_HYPERPARAMS[0],
+            gamma=cfg.SOFTMAX_HYPERPARAMS[1],
             factory=factories["softmax_fn"],
             param_name="temperature",
             param_range=(0.1, 5.0)
         ),
         ExplorerTuner(
             name="ucb",
+            alpha=cfg.UCB_HYPERPARAMS[0],
+            gamma=cfg.UCB_HYPERPARAMS[1],
             factory=factories["ucb_fn"],
             param_name="c",
             param_range=(0.1, 2.0)
         ),
         ExplorerTuner(
             name="maxent",
+            alpha=cfg.MAXENT_HYPERPARAMS[0],
+            gamma=cfg.MAXENT_HYPERPARAMS[1],
             factory=factories["maxent_fn"],
             param_name="alpha",
             param_range=(0.1, 2.0)
         ),
         ExplorerTuner(
             name="count_bonus",
+            alpha=cfg.COUNT_BONUS_HYPERPARAMS[0],
+            gamma=cfg.COUNT_BONUS_HYPERPARAMS[1],
             factory=factories["count_bonus_fn"],
             param_name="beta",
             param_range=(0.1, 5.0)
         ),
         ExplorerTuner(
             name="thompson",
+            alpha=cfg.THOMPSON_HYPERPARAMS[0],
+            gamma=cfg.THOMPSON_HYPERPARAMS[1],
             factory=factories["thompson_fn"],
             param_name="sigma",
             param_range=(0.1, 2.0)
@@ -137,3 +153,8 @@ def tune_explorers():
         tuned[tuner_name] = result
 
     print(f"Tuning Results:\n{tuned}")
+    with open(cfg.COMPARISION_RESULTS_DIR + "/explorers/" + cfg.COMPARISON_RESULTS_FILE, 'w') as f:
+        json.dump(tuned, f, indent=2)
+
+if __name__ == "__main__":
+    tune_explorers()

@@ -1,0 +1,2060 @@
+{
+  "count_bonus_fn": {
+    "alpha": 0.6769355341610674,
+    "gamma": 0.9145426379747483,
+    "score": 0.7120018492013329,
+    "runs": [
+      {
+        "strategy": "count_bonus_fn",
+        "seed": 0,
+        "alpha": 0.6769355341610674,
+        "gamma": 0.9145426379747483,
+        "total_raw_trajectory_regret": -3278.0,
+        "mean_raw_trajectory_regret": -3.278,
+        "std_raw_trajectory_regret": 2.759044821732392,
+        "total_raw_optimal_regret": 950.0,
+        "mean_raw_optimal_regret": 0.95,
+        "std_raw_optimal_regret": 2.5274271281063454,
+        "mean_normalized_trajectory_regret": -0.5506477269462564,
+        "std_normalized_trajectory_regret": 0.593438443608729,
+        "mean_normalized_optimal_regret": 0.06409015282010133,
+        "std_normalized_optimal_regret": 0.2590699667063462,
+        "mean_raw_capture_ratio": 0.7175631466572643,
+        "std_raw_capture_ratio": 0.8953358898212779,
+        "mean_normalized_capture_ratio": 0.9269098471798987,
+        "std_normalized_capture_ratio": 0.27366110072289257,
+        "visit_counts": [
+          [
+            0,
+            0,
+            5777,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            6929,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            8828,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9623
+          ],
+          [
+            0,
+            0,
+            9666,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            10378
+          ],
+          [
+            7739,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            6632,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            5974,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4454,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "strategy": "count_bonus_fn",
+        "seed": 1,
+        "alpha": 0.6769355341610674,
+        "gamma": 0.9145426379747483,
+        "total_raw_trajectory_regret": -2931.0,
+        "mean_raw_trajectory_regret": -2.931,
+        "std_raw_trajectory_regret": 3.401442166024407,
+        "total_raw_optimal_regret": 3965.0,
+        "mean_raw_optimal_regret": 3.965,
+        "std_raw_optimal_regret": 3.4001965143703585,
+        "mean_normalized_trajectory_regret": -0.3451107972866487,
+        "std_normalized_trajectory_regret": 0.4246091857709159,
+        "mean_normalized_optimal_regret": 0.22283699089701978,
+        "std_normalized_optimal_regret": 0.21413553165176527,
+        "mean_raw_capture_ratio": 0.6760771158794766,
+        "std_raw_capture_ratio": 1.4783804773477993,
+        "mean_normalized_capture_ratio": 0.7721630091029802,
+        "std_normalized_capture_ratio": 0.22046180028813261,
+        "visit_counts": [
+          [
+            0,
+            0,
+            5772,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            6918
+          ],
+          [
+            0,
+            0,
+            0,
+            8112,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            9659,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            10346,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            10419,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            8317,
+            0,
+            0
+          ],
+          [
+            6513,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            5498,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4446,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "strategy": "count_bonus_fn",
+        "seed": 2,
+        "alpha": 0.6769355341610674,
+        "gamma": 0.9145426379747483,
+        "total_raw_trajectory_regret": -631.0,
+        "mean_raw_trajectory_regret": -0.631,
+        "std_raw_trajectory_regret": 3.016610505010373,
+        "total_raw_optimal_regret": 12379.0,
+        "mean_raw_optimal_regret": 12.379,
+        "std_raw_optimal_regret": 4.380016386218611,
+        "mean_normalized_trajectory_regret": -0.12522159815588607,
+        "std_normalized_trajectory_regret": 0.43352427338806776,
+        "mean_normalized_optimal_regret": 0.56106730867888,
+        "std_normalized_optimal_regret": 0.15090187923394785,
+        "mean_raw_capture_ratio": -0.2819091077476993,
+        "std_raw_capture_ratio": 1.5041265580625027,
+        "mean_normalized_capture_ratio": 0.43693269132112006,
+        "std_normalized_capture_ratio": 0.1500761786689313,
+        "visit_counts": [
+          [
+            0,
+            0,
+            5750,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            6940,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            8141,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            9648,
+            0,
+            0,
+            0
+          ],
+          [
+            10363,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            9631,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            8419,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            6660,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            5591,
+            0
+          ],
+          [
+            4857,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    ]
+  },
+  "epsilon_greedy_fn": {
+    "alpha": 0.03659065186602914,
+    "gamma": 0.9835707078594274,
+    "score": 0.8033307402909412,
+    "runs": [
+      {
+        "strategy": "epsilon_greedy_fn",
+        "seed": 0,
+        "alpha": 0.03659065186602914,
+        "gamma": 0.9835707078594274,
+        "total_raw_trajectory_regret": -4369.0,
+        "mean_raw_trajectory_regret": -4.369,
+        "std_raw_trajectory_regret": 2.8197144872823188,
+        "total_raw_optimal_regret": -141.0,
+        "mean_raw_optimal_regret": -0.141,
+        "std_raw_optimal_regret": 2.4842081817533512,
+        "mean_normalized_trajectory_regret": -0.7184299839866016,
+        "std_normalized_trajectory_regret": 0.6697183068169384,
+        "mean_normalized_optimal_regret": -0.035297033984845266,
+        "std_normalized_optimal_regret": 0.25794367596997597,
+        "mean_raw_capture_ratio": 0.6757050671550672,
+        "std_raw_capture_ratio": 0.8600049008632218,
+        "mean_normalized_capture_ratio": 1.0262970339848452,
+        "std_normalized_capture_ratio": 0.27586020099889985,
+        "visit_counts": [
+          [
+            0,
+            0,
+            0,
+            0,
+            5777,
+            0,
+            0
+          ],
+          [
+            7625,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            8842,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            8915,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            9664,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            9628,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            8446,
+            0
+          ],
+          [
+            0,
+            0,
+            7137,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            5516,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            4450
+          ]
+        ]
+      },
+      {
+        "strategy": "epsilon_greedy_fn",
+        "seed": 1,
+        "alpha": 0.03659065186602914,
+        "gamma": 0.9835707078594274,
+        "total_raw_trajectory_regret": -4332.0,
+        "mean_raw_trajectory_regret": -4.332,
+        "std_raw_trajectory_regret": 2.8639095617665684,
+        "total_raw_optimal_regret": 2564.0,
+        "mean_raw_optimal_regret": 2.564,
+        "std_raw_optimal_regret": 2.6254136429897663,
+        "mean_normalized_trajectory_regret": -0.47417504186952125,
+        "std_normalized_trajectory_regret": 0.4121576355159529,
+        "mean_normalized_optimal_regret": 0.14901028702796656,
+        "std_normalized_optimal_regret": 0.17868196930187538,
+        "mean_raw_capture_ratio": 0.7138130118849159,
+        "std_raw_capture_ratio": 1.1594979816985505,
+        "mean_normalized_capture_ratio": 0.8459897129720334,
+        "std_normalized_capture_ratio": 0.18819041332871317,
+        "visit_counts": [
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            5225,
+            0
+          ],
+          [
+            0,
+            0,
+            8149,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            8856,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            8942,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            9637,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            10417,
+            0,
+            0
+          ],
+          [
+            8316,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            6052
+          ],
+          [
+            0,
+            5536,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4870,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "strategy": "epsilon_greedy_fn",
+        "seed": 2,
+        "alpha": 0.03659065186602914,
+        "gamma": 0.9835707078594274,
+        "total_raw_trajectory_regret": -2900.0,
+        "mean_raw_trajectory_regret": -2.9,
+        "std_raw_trajectory_regret": 2.8785910244920667,
+        "total_raw_optimal_regret": 10110.0,
+        "mean_raw_optimal_regret": 10.11,
+        "std_raw_optimal_regret": 3.856782956658927,
+        "mean_normalized_trajectory_regret": -0.39388441344087627,
+        "std_normalized_trajectory_regret": 0.4488759381306455,
+        "mean_normalized_optimal_regret": 0.4602945260840551,
+        "std_normalized_optimal_regret": 0.13904923623541868,
+        "mean_raw_capture_ratio": -0.21425485597892482,
+        "std_raw_capture_ratio": 1.8919120009707038,
+        "mean_normalized_capture_ratio": 0.5377054739159449,
+        "std_normalized_capture_ratio": 0.1396053973533602,
+        "visit_counts": [
+          [
+            5175,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            7598,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9438
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8181
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            9649,
+            0
+          ],
+          [
+            0,
+            0,
+            11173,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            8307,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            6497,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5522
+          ],
+          [
+            4460,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    ]
+  },
+  "maxent_fn": {
+    "alpha": 0.9179890549011681,
+    "gamma": 0.9051982798139515,
+    "score": 0.6476794404008235,
+    "runs": [
+      {
+        "strategy": "maxent_fn",
+        "seed": 0,
+        "alpha": 0.9179890549011681,
+        "gamma": 0.9051982798139515,
+        "total_raw_trajectory_regret": -4160.0,
+        "mean_raw_trajectory_regret": -4.16,
+        "std_raw_trajectory_regret": 2.859121294134716,
+        "total_raw_optimal_regret": 9674.0,
+        "mean_raw_optimal_regret": 9.674,
+        "std_raw_optimal_regret": 3.5819763475705075,
+        "mean_normalized_trajectory_regret": -0.4857897266515435,
+        "std_normalized_trajectory_regret": 0.43963991261208574,
+        "mean_normalized_optimal_regret": 0.4101078856947864,
+        "std_normalized_optimal_regret": 0.13242980819104205,
+        "mean_raw_capture_ratio": -0.08565331323337078,
+        "std_raw_capture_ratio": 1.983366578132342,
+        "mean_normalized_capture_ratio": 0.5878921143052136,
+        "std_normalized_capture_ratio": 0.1337668810996154,
+        "visit_counts": [
+          [
+            5759,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            7665,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            8778,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8985
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8879
+          ],
+          [
+            0,
+            0,
+            0,
+            10374,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9078
+          ],
+          [
+            6486,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            5527,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            4469
+          ]
+        ]
+      },
+      {
+        "strategy": "maxent_fn",
+        "seed": 1,
+        "alpha": 0.9179890549011681,
+        "gamma": 0.9051982798139515,
+        "total_raw_trajectory_regret": -2751.0,
+        "mean_raw_trajectory_regret": -2.751,
+        "std_raw_trajectory_regret": 2.957658997711999,
+        "total_raw_optimal_regret": 2120.0,
+        "mean_raw_optimal_regret": 2.12,
+        "std_raw_optimal_regret": 2.8467004942044225,
+        "mean_normalized_trajectory_regret": -0.1941296775395565,
+        "std_normalized_trajectory_regret": 0.23764673542852988,
+        "mean_normalized_optimal_regret": 0.09357487000490244,
+        "std_normalized_optimal_regret": 0.13889428083393582,
+        "mean_raw_capture_ratio": 0.665764172510496,
+        "std_raw_capture_ratio": 1.0618901531091858,
+        "mean_normalized_capture_ratio": 0.9014251299950975,
+        "std_normalized_capture_ratio": 0.15275770305592368,
+        "visit_counts": [
+          [
+            5755,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            7643,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            8805,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8199
+          ],
+          [
+            0,
+            0,
+            0,
+            9653,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            10367,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            8501,
+            0
+          ],
+          [
+            7105,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5521
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            4451,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "strategy": "maxent_fn",
+        "seed": 2,
+        "alpha": 0.9179890549011681,
+        "gamma": 0.9051982798139515,
+        "total_raw_trajectory_regret": -2630.0,
+        "mean_raw_trajectory_regret": -2.63,
+        "std_raw_trajectory_regret": 3.418594270571866,
+        "total_raw_optimal_regret": 9613.0,
+        "mean_raw_optimal_regret": 9.613,
+        "std_raw_optimal_regret": 4.074780341912289,
+        "mean_normalized_trajectory_regret": -0.583376364485188,
+        "std_normalized_trajectory_regret": 0.9869473321742838,
+        "mean_normalized_optimal_regret": 0.5422789230978405,
+        "std_normalized_optimal_regret": 0.20678450838717194,
+        "mean_raw_capture_ratio": -0.13272284343709267,
+        "std_raw_capture_ratio": 1.9383752921723518,
+        "mean_normalized_capture_ratio": 0.4537210769021594,
+        "std_normalized_capture_ratio": 0.20592534311776903,
+        "visit_counts": [
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            4660,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            8114,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9445
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            8939,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9675
+          ],
+          [
+            9678,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            8393,
+            0
+          ],
+          [
+            0,
+            0,
+            7115,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            5525,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4456,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    ]
+  },
+  "softmax_fn": {
+    "alpha": 0.5076490015820623,
+    "gamma": 0.9117307795097107,
+    "score": 0.614698841433091,
+    "runs": [
+      {
+        "strategy": "softmax_fn",
+        "seed": 0,
+        "alpha": 0.5076490015820623,
+        "gamma": 0.9117307795097107,
+        "total_raw_trajectory_regret": -2916.0,
+        "mean_raw_trajectory_regret": -2.916,
+        "std_raw_trajectory_regret": 3.038449633641502,
+        "total_raw_optimal_regret": 10918.0,
+        "mean_raw_optimal_regret": 10.918,
+        "std_raw_optimal_regret": 3.8915832793890486,
+        "mean_normalized_trajectory_regret": -0.3442305532269289,
+        "std_normalized_trajectory_regret": 0.4755332621488442,
+        "mean_normalized_optimal_regret": 0.4675413067069456,
+        "std_normalized_optimal_regret": 0.14238840270109077,
+        "mean_raw_capture_ratio": -0.24300458948786116,
+        "std_raw_capture_ratio": 1.864760329935514,
+        "mean_normalized_capture_ratio": 0.5304586932930544,
+        "std_normalized_capture_ratio": 0.1428300317078804,
+        "visit_counts": [
+          [
+            0,
+            0,
+            0,
+            5234,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            8189,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            8779,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8985
+          ],
+          [
+            0,
+            0,
+            9642,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            9639,
+            0,
+            0
+          ],
+          [
+            0,
+            8446,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            6608,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            5610,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            4868
+          ]
+        ]
+      },
+      {
+        "strategy": "softmax_fn",
+        "seed": 1,
+        "alpha": 0.5076490015820623,
+        "gamma": 0.9117307795097107,
+        "total_raw_trajectory_regret": -2601.0,
+        "mean_raw_trajectory_regret": -2.601,
+        "std_raw_trajectory_regret": 3.2447384066095877,
+        "total_raw_optimal_regret": 2270.0,
+        "mean_raw_optimal_regret": 2.27,
+        "std_raw_optimal_regret": 3.2186114179036056,
+        "mean_normalized_trajectory_regret": -0.18811679948339796,
+        "std_normalized_trajectory_regret": 0.26255163314322183,
+        "mean_normalized_optimal_regret": 0.09872853300940308,
+        "std_normalized_optimal_regret": 0.15509684092712722,
+        "mean_raw_capture_ratio": 0.6928951267686562,
+        "std_raw_capture_ratio": 1.0664401833434585,
+        "mean_normalized_capture_ratio": 0.8962714669905969,
+        "std_normalized_capture_ratio": 0.16747159891114927,
+        "visit_counts": [
+          [
+            5755,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            7643,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            8805,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8198
+          ],
+          [
+            0,
+            0,
+            0,
+            8873,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            11179,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9076
+          ],
+          [
+            0,
+            0,
+            6500,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5520
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            4451,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "strategy": "softmax_fn",
+        "seed": 2,
+        "alpha": 0.5076490015820623,
+        "gamma": 0.9117307795097107,
+        "total_raw_trajectory_regret": -1995.0,
+        "mean_raw_trajectory_regret": -1.995,
+        "std_raw_trajectory_regret": 3.568712752619733,
+        "total_raw_optimal_regret": 10248.0,
+        "mean_raw_optimal_regret": 10.248,
+        "std_raw_optimal_regret": 4.331195591895528,
+        "mean_normalized_trajectory_regret": -0.44280136448518803,
+        "std_normalized_trajectory_regret": 0.9217172076665011,
+        "mean_normalized_optimal_regret": 0.5786336359843784,
+        "std_normalized_optimal_regret": 0.21648591599828312,
+        "mean_raw_capture_ratio": -0.2679206704014607,
+        "std_raw_capture_ratio": 1.8749571328007764,
+        "mean_normalized_capture_ratio": 0.41736636401562155,
+        "std_normalized_capture_ratio": 0.21498938816355098,
+        "visit_counts": [
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            4660,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            8114,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9445
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            8939,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9675
+          ],
+          [
+            10385,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            7725,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            6119,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            6061,
+            0
+          ],
+          [
+            0,
+            0,
+            4877,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    ]
+  },
+  "thompson_fn": {
+    "alpha": 0.40533248756023893,
+    "gamma": 0.9168346663151985,
+    "score": 0.543705782927034,
+    "runs": [
+      {
+        "strategy": "thompson_fn",
+        "seed": 0,
+        "alpha": 0.40533248756023893,
+        "gamma": 0.9168346663151985,
+        "total_raw_trajectory_regret": -1821.0,
+        "mean_raw_trajectory_regret": -1.821,
+        "std_raw_trajectory_regret": 3.1807351471123897,
+        "total_raw_optimal_regret": 9823.0,
+        "mean_raw_optimal_regret": 9.823,
+        "std_raw_optimal_regret": 3.894462458136917,
+        "mean_normalized_trajectory_regret": -0.2682615921702996,
+        "std_normalized_trajectory_regret": 0.535107454178677,
+        "mean_normalized_optimal_regret": 0.49906226230455,
+        "std_normalized_optimal_regret": 0.1717256533613245,
+        "mean_raw_capture_ratio": -0.20698235747546154,
+        "std_raw_capture_ratio": 2.0607330748794537,
+        "mean_normalized_capture_ratio": 0.49793773769545,
+        "std_normalized_capture_ratio": 0.17171582067938793,
+        "visit_counts": [
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            5219,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            7489
+          ],
+          [
+            0,
+            0,
+            0,
+            8825,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9642
+          ],
+          [
+            9649,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            10409,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            7690,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            6140,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            6080,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            4857,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "strategy": "thompson_fn",
+        "seed": 1,
+        "alpha": 0.40533248756023893,
+        "gamma": 0.9168346663151985,
+        "total_raw_trajectory_regret": -2666.0,
+        "mean_raw_trajectory_regret": -2.666,
+        "std_raw_trajectory_regret": 2.7702198681906314,
+        "total_raw_optimal_regret": 7310.0,
+        "mean_raw_optimal_regret": 7.31,
+        "std_raw_optimal_regret": 3.191251178469674,
+        "mean_normalized_trajectory_regret": -0.4056755092130092,
+        "std_normalized_trajectory_regret": 0.5505281350759181,
+        "mean_normalized_optimal_regret": 0.4141293978921264,
+        "std_normalized_optimal_regret": 0.17888075289078875,
+        "mean_raw_capture_ratio": 0.1829115310214008,
+        "std_raw_capture_ratio": 2.13130981323809,
+        "mean_normalized_capture_ratio": 0.5818706021078737,
+        "std_normalized_capture_ratio": 0.18074833390128867,
+        "visit_counts": [
+          [
+            0,
+            5237,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            8170,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8099
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            8953,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            10371
+          ],
+          [
+            0,
+            0,
+            10392,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            7702,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            6622,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            5986,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            4468,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "strategy": "thompson_fn",
+        "seed": 2,
+        "alpha": 0.40533248756023893,
+        "gamma": 0.9168346663151985,
+        "total_raw_trajectory_regret": -3275.0,
+        "mean_raw_trajectory_regret": -3.275,
+        "std_raw_trajectory_regret": 2.7489874375725933,
+        "total_raw_optimal_regret": 4475.0,
+        "mean_raw_optimal_regret": 4.475,
+        "std_raw_optimal_regret": 2.767857661809226,
+        "mean_normalized_trajectory_regret": -1.5371293650793652,
+        "std_normalized_trajectory_regret": 1.832938324145265,
+        "mean_normalized_optimal_regret": 0.44169099102222165,
+        "std_normalized_optimal_regret": 0.28159049992311286,
+        "mean_raw_capture_ratio": 0.6006126161205496,
+        "std_raw_capture_ratio": 1.6400784610098094,
+        "mean_normalized_capture_ratio": 0.5513090089777783,
+        "std_normalized_capture_ratio": 0.28295106267136977,
+        "visit_counts": [
+          [
+            0,
+            5229,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            8159,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            8830,
+            0,
+            0
+          ],
+          [
+            8209,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            9639,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            11162,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            8308,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            6509,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            5080,
+            0,
+            0
+          ],
+          [
+            0,
+            4875,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    ]
+  },
+  "ucb_fn": {
+    "alpha": 0.3113344398649988,
+    "gamma": 0.9118752866802892,
+    "score": 0.7643049689984904,
+    "runs": [
+      {
+        "strategy": "ucb_fn",
+        "seed": 0,
+        "alpha": 0.3113344398649988,
+        "gamma": 0.9118752866802892,
+        "total_raw_trajectory_regret": -4333.0,
+        "mean_raw_trajectory_regret": -4.333,
+        "std_raw_trajectory_regret": 2.8517088286224532,
+        "total_raw_optimal_regret": -105.0,
+        "mean_raw_optimal_regret": -0.105,
+        "std_raw_optimal_regret": 2.4928275490272465,
+        "mean_normalized_trajectory_regret": -0.7116958213355272,
+        "std_normalized_trajectory_regret": 0.6620702842164157,
+        "mean_normalized_optimal_regret": -0.029664102471839045,
+        "std_normalized_optimal_regret": 0.2618089089189143,
+        "mean_raw_capture_ratio": 0.7068321373071373,
+        "std_raw_capture_ratio": 0.8181677310414444,
+        "mean_normalized_capture_ratio": 1.020664102471839,
+        "std_normalized_capture_ratio": 0.2792961171410484,
+        "visit_counts": [
+          [
+            0,
+            0,
+            5777,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            6929,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            8828,
+            0,
+            0,
+            0
+          ],
+          [
+            9623,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            9666,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            10378
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            8325
+          ],
+          [
+            0,
+            0,
+            6508,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5516
+          ],
+          [
+            4450,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "strategy": "ucb_fn",
+        "seed": 1,
+        "alpha": 0.3113344398649988,
+        "gamma": 0.9118752866802892,
+        "total_raw_trajectory_regret": -2388.0,
+        "mean_raw_trajectory_regret": -2.388,
+        "std_raw_trajectory_regret": 2.9336090506511026,
+        "total_raw_optimal_regret": 4508.0,
+        "mean_raw_optimal_regret": 4.508,
+        "std_raw_optimal_regret": 2.9854394733186016,
+        "mean_normalized_trajectory_regret": -0.28130462120868466,
+        "std_normalized_trajectory_regret": 0.3936743322725693,
+        "mean_normalized_optimal_regret": 0.2605999450854192,
+        "std_normalized_optimal_regret": 0.1976569391508949,
+        "mean_raw_capture_ratio": 0.6016472992264014,
+        "std_raw_capture_ratio": 1.4590545249226887,
+        "mean_normalized_capture_ratio": 0.7344000549145808,
+        "std_normalized_capture_ratio": 0.2035672800711535,
+        "visit_counts": [
+          [
+            0,
+            0,
+            0,
+            5225,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            7467,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            8823,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            9654
+          ],
+          [
+            0,
+            0,
+            9640,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            9664,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            8419,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            7163
+          ],
+          [
+            5499,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4446,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      {
+        "strategy": "ucb_fn",
+        "seed": 2,
+        "alpha": 0.3113344398649988,
+        "gamma": 0.9118752866802892,
+        "total_raw_trajectory_regret": -2892.0,
+        "mean_raw_trajectory_regret": -2.892,
+        "std_raw_trajectory_regret": 3.3742735102124906,
+        "total_raw_optimal_regret": 10118.0,
+        "mean_raw_optimal_regret": 10.118,
+        "std_raw_optimal_regret": 4.189227330382732,
+        "mean_normalized_trajectory_regret": -0.39691518512447305,
+        "std_normalized_trajectory_regret": 0.5007413528477002,
+        "mean_normalized_optimal_regret": 0.46014925039094845,
+        "std_normalized_optimal_regret": 0.1590391817485873,
+        "mean_raw_capture_ratio": -0.1387042048204957,
+        "std_raw_capture_ratio": 1.9063953353174017,
+        "mean_normalized_capture_ratio": 0.5378507496090515,
+        "std_normalized_capture_ratio": 0.15952748944383657,
+        "visit_counts": [
+          [
+            0,
+            0,
+            5750,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            6940,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            8141,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            9648,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            10364,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            10372,
+            0,
+            0
+          ],
+          [
+            8306,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            6497
+          ],
+          [
+            0,
+            0,
+            5522,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            4460,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    ]
+  }
+}

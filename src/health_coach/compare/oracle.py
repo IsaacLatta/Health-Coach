@@ -4,10 +4,12 @@ import pandas as pd
 
 import health_coach.config as cfg
 from health_coach.compare.env import PureQLearningEnvironment
-from health_coach.rl_data_gen.drift import discretize_probability, action_to_noise
-from health_coach.tools.rl import _compute_reward
+from rl_data_gen.drift import discretize_probability, action_to_noise
 
 from typing import List, Callable
+
+def reward_fn(prev: int, cur: int) -> float:
+        return 1.0 if cur < prev else (-1.0 if cur > prev else 0.0)
 
 def build_oracle(env: PureQLearningEnvironment, n_samples: int = 50) -> Callable[[int, np.ndarray], int]:
     oracle = {}
@@ -42,7 +44,7 @@ def sweep_oracle(
             exploration_strategy=None,  # placeholder
             state_mapper=discretize_probability,
             action_to_noise_mapper=action_to_noise,
-            reward_function=_compute_reward,
+            reward_function=reward_fn,
             gamma=cfg.EPSILON_CURRENT,  # not used by oracle
             alpha=cfg.EPSILON_CURRENT   # not used by oracle
         )

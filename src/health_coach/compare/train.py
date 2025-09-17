@@ -3,7 +3,7 @@ from typing import Tuple, Dict, Callable, List, Any
 
 import health_coach.config as cfg
 import health_coach.compare.env as env
-import health_coach.rl_data_gen.drift as drift
+import health_coach.compare.rl_data_gen.drift as drift
 
 def reward_function(prev_state: int, current_state: int) -> float:
     res = prev_state - current_state

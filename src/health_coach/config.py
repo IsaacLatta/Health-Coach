@@ -1,11 +1,8 @@
 import random
 import os
 
-# LLM_MODEL: str = "ollama/gemma3:latest"
-# LLM_MODEL: str = "ollama/qwen3:1.7b"
-LLM_MODEL: str = "ollama/qwen3:4b"
-LLM_BASE_URL: str = "http://192.168.1.202:80"
-# LLM_BASE_URL: str = "http://127.0.0.1:11434"
+# LLM_MODEL: str = "ollama/qwen3:4b"
+# LLM_BASE_URL: str = "http://localhost:11434"
 
 ACTIONS = [
     "inc_top_k",       # 0
@@ -16,10 +13,8 @@ ACTIONS = [
     "raise_high",      # 5
 ]
 
-Q_STATES: int = 30
-# Q_ACTIONS: int = 7
+Q_STATES: int = 10
 Q_ACTIONS = int(os.getenv("Q_ACTIONS", "6"))
-
 
 STATE_TO_NOISE_FACTOR: float = 0.1
 NOISE_STD: float = (1 / Q_STATES) * STATE_TO_NOISE_FACTOR
@@ -29,6 +24,8 @@ EPISODE_LENGTH = 5
 TRAIN_FRACTION: float = 0.8
 EVAL_FRACTION: float = 0.2
 
+COMPARISION_RESULTS_DIR="/home/isaac/Projects/Health-Coach/results"
+COMPARISON_RESULTS_FILE="rl_compare_short_episodes.json"
 ALPHA: float = 0.5
 GAMMA: float = 0.5
 SHOULD_SAMPLE_HYPERPARAMS: bool = True
@@ -49,6 +46,30 @@ EPSILON_END: float = 0.01
 EPSILON_DECAY_RATE: float = (EPSILON_END / EPSILON_START) ** (1.0 / (TRAIN_FRACTION * NUM_EPISODES - 1))
 
 EPSILON_CURRENT: float = EPSILON_START
+
+SOFTMAX_HYPERPARAMS: tuple[float, float] = (0.5076, 0.9117)
+SOFTMAX_TEMP: float = 4.784567
+
+MAXENT_ALPHA: float =  1.29426
+MAXENT_HYPERPARAMS: tuple[float, float] = (0.9180, 0.9052)
+
+THOMPSON_HYPERPARAMS: tuple[float, float] = (0.4053, 0.9168)
+THOMPSON_SIGMA: float = 0.18264
+
+COUNT_BONUS_HYPERPARAMS: tuple[float, float] = (0.6769, 0.9145)
+COUNT_BONUS_BETA: float = 3.72038
+
+UCB_C: float = 1.916465
+UCB_HYPERPARAMS: tuple[float, float] = (0.3113, 0.9119)
+
+EPSILON_GREEDY_HYPERPARAMS: tuple[float, float] = (0.0366, 0.9836)
+EPSILON_START: float = 1.0
+EPSILON_END: float = 0.01
+# EPSILON_DECAY_RATE: float = (EPSILON_END / EPSILON_START) ** (1.0 / (TRAIN_FRACTION * NUM_EPISODES - 1))
+EPSILON_DECAY_RATE: float = 0.9965
+
+EPSILON_CURRENT: float = EPSILON_START
+
 
 def update_epsilon() -> None:
     global EPSILON_CURRENT

@@ -101,7 +101,7 @@ def _normalize_feature_name(name: str) -> str:
 class SklearnPicklePredictionService(PredictionService):
     def __init__(self, model_path: Optional[str | Path] = None,
                  feature_order: Optional[List[str]] = None):
-        self.model_path = Path(model_path or os.getenv("PRED_MODEL_PATH", "models/cv_pred_log_reg.pkl"))
+        self.model_path = Path(model_path or os.getenv("PRED_MODEL_PATH", "models/predictor.pkl"))
         self.feature_order = feature_order or FEATURE_ORDER
         self._model = None
 

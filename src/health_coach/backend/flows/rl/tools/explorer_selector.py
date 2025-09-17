@@ -35,3 +35,20 @@ def execute_explorer(state: int, idx: int, q_table: QLike) -> int:
         return explorer(state)
     except Exception:
         return 0
+
+def get_hyperparams_for_explorer(idx: int) -> tuple[float, float]:
+    if not isinstance(idx, int) or idx < 0 or idx > 5:
+        return (cfg.ALPHA, cfg.GAMMA)
+
+    if idx == 0:
+        return cfg.EPSILON_GREEDY_HYPERPARAMS
+    elif idx == 1:
+        return cfg.SOFTMAX_HYPERPARAMS
+    elif idx == 2:
+        return cfg.UCB_HYPERPARAMS
+    elif idx == 3:
+        return cfg.THOMPSON_HYPERPARAMS
+    elif idx == 4:
+        return cfg.COUNT_BONUS_HYPERPARAMS
+    else:
+        return cfg.MAXENT_HYPERPARAMS

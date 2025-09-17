@@ -21,6 +21,7 @@ class RLState(BaseModel):
     env_reward: float = 0.0
     context_json: Any = None
     action: int = 0
+    explr_idx: int = 0
     shaped_reward: float = 0.0
     result: Optional[Dict[str, Any]] = None
 
@@ -50,7 +51,7 @@ class RLFlow(Flow[RLState]):
     def choose_action(self):
         s = self.state
         q = s.deps.qtables.get(s.patient_id)
-        s.action = int(s.deps.rl.select_action(s.prev_state, s.curr_state, s.env_reward, s.context_json, q))
+        s.action, s.explr_idx = s.deps.rl.select_action(s.prev_state, s.curr_state, s.env_reward, s.context_json, q)
         return s.action
 
     @listen(make_context)
@@ -62,7 +63,7 @@ class RLFlow(Flow[RLState]):
     def update_q_and_context(self):
         s = self.state
         q = s.deps.qtables.get(s.patient_id)
-        qn = s.deps.rl.update(s.prev_state, s.action, s.shaped_reward, s.curr_state, q)
+        qn = s.deps.rl.update(s.prev_state, s.action, s.shaped_reward, s.curr_state, q, s.explr_idx)
         s.deps.qtables.save(s.patient_id, qn)
 
         if s.deps.transitions:

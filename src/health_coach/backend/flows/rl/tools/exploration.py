@@ -88,7 +88,7 @@ def _get_visit_counts(q_table: QLike) -> np.ndarray:
     num_states, num_actions_ = q.shape
     return np.zeros((num_states, num_actions_), dtype=float)
 
-def epsilon_greedy_fn(current_state: int, q_table: np.ndarray, epsilon: float = None) -> int:
+def epsilon_greedy_fn(current_state: int, q_table: np.ndarray, epsilon: float = cfg.EPSILON_CURRENT) -> int:
     q = to_nd(q_table)
     epsilon = cfg.EPSILON_CURRENT if epsilon is None else float(epsilon)
     s = retrieve_state_index(current_state)
@@ -99,7 +99,7 @@ def epsilon_greedy_fn(current_state: int, q_table: np.ndarray, epsilon: float = 
 
 
 @tool
-def epsilon_greedy(current_state: int, epsilon: float = None) -> int:
+def epsilon_greedy(current_state: int, epsilon: float = cfg.EPSILON_CURRENT) -> int:
     """Standard ε-greedy: with prob ε pick random action, else the argmax."""
     return epsilon_greedy_fn(current_state, q_table=get_q_table(), epsilon=epsilon)
 
@@ -138,7 +138,7 @@ def ucb(current_state: int, c: float = cfg.UCB_C) -> int:
     return ucb_fn(current_state, q_table=get_q_table(), c=c)
 
 
-def count_bonus_fn(current_state: int, q_table: np.ndarray, beta: float = 1.0) -> int:
+def count_bonus_fn(current_state: int, q_table: np.ndarray, beta: float = cfg.COUNT_BONUS_BETA) -> int:
     q = to_nd(q_table)
     s = retrieve_state_index(current_state)
     counts = _get_visit_counts(q)[s]
@@ -184,8 +184,6 @@ def get_all_tools():
     """Return all exploration tools."""
     return [epsilon_greedy, softmax, ucb, count_bonus, thompson, maxent]
 
-
-def get_all_funcs():
+def get_all_tool_funcs():
     """Return core exploration implementations (extend as needed)."""
-    return [epsilon_greedy_fn, softmax_fn, ucb_fn]
-    # return [epsilon_greedy_fn, softmax_fn, ucb_fn, count_bonus_fn, thompson_fn, maxent_fn]
+    return [epsilon_greedy_fn, softmax_fn, ucb_fn, thompson_fn, count_bonus_fn,  maxent_fn]

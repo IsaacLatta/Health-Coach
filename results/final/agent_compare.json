@@ -1,0 +1,108 @@
+{
+  "total_raw_trajectory_regret": 1.0,
+  "mean_raw_trajectory_regret": 1.0,
+  "std_raw_trajectory_regret": 0.0,
+  "total_raw_optimal_regret": 5.0,
+  "mean_raw_optimal_regret": 5.0,
+  "std_raw_optimal_regret": 0.0,
+  "mean_normalized_trajectory_regret": 0.09090909090909091,
+  "std_normalized_trajectory_regret": 0.0,
+  "mean_normalized_optimal_regret": 0.3333333333333333,
+  "std_normalized_optimal_regret": 0.0,
+  "mean_raw_capture_ratio": -4.0,
+  "std_raw_capture_ratio": 0.0,
+  "mean_normalized_capture_ratio": 0.6666666666666666,
+  "std_normalized_capture_ratio": 0.0,
+  "visit_counts": [
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      3,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  ]
+}

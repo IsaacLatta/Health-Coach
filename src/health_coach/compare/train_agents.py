@@ -3,11 +3,12 @@ from typing import Tuple, Dict, Callable, List, Any
 
 from crewai.tools import tool, BaseTool
 
-from health_coach.backend.agents.flows.rl.rl_engine import RLEngine, SimpleQLearningEngine
-from health_coach.backend.agents.flows.rl.flows import RLFlow
 import health_coach.config as cfg
 import health_coach.compare.env as env
-import health_coach.rl_data_gen.drift as drift
+
+import health_coach.compare.rl_data_gen.drift as drift
+from health_coach.compare.rl import RLEngine, SimpleQLearningEngine
+from health_coach.compare.flows import RLFlow
 
 def reward_function(prev_state: int, current_state: int) -> float:
     res = prev_state - current_state

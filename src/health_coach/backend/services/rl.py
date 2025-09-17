@@ -5,10 +5,13 @@ from typing import List, Any, Callable, Dict
 from crewai import Crew, Process
 from health_coach.backend.flows.rl.agents import explorer_agent
 from health_coach.backend.flows.rl.tasks import select_explorer_task
+from health_coach.backend.flows.rl.tools.explorer_selector import get_hyperparams_for_explorer
 
 QTable = List[List[float]]
 State = int
 Action = int
+Explorer_Index = int
+
 
 class RLService(ABC):
     @abstractmethod
@@ -16,9 +19,9 @@ class RLService(ABC):
     @abstractmethod
     def env_reward(self, prev: State, curr: State) -> float: ...
     @abstractmethod
-    def select_action(self, prev: State, cur: State, reward: float, context: Any, qtable: QTable) -> Action: ...
+    def select_action(self, prev: State, cur: State, reward: float, context: Any, qtable: QTable) -> tuple[Action, Explorer_Index]: ...
     @abstractmethod
-    def update(self, prev: State, action: Action, reward: float, cur: State, q: QTable) -> QTable: ...
+    def update(self, prev: State, action: Action, reward: float, cur: State, q: QTable, explr_idx: int = 0) -> QTable: ...
 
 class QLearningRLService(RLService):
     def __init__(self,
@@ -60,17 +63,19 @@ class QLearningRLService(RLService):
 
         try:
             action = self._explorers[idx](cur, qtable)
-            return action
+            return (action, idx)
         except Exception as e:
-            return 0
+            return (0, 0)
 
-    def update(self, prev: State, action: Action, reward: float, cur: State, q: QTable) -> QTable:
+    def update(self, prev: State, action: Action, reward: float, cur: State, q: QTable, explr_idx: int = 0) -> QTable:
         if not q or not isinstance(q[0], list):
             raise ValueError("Q-table must be a list of lists[states][actions].")
 
         best_next = max(q[cur]) if q[cur] else 0.0
         old_q = q[prev][action]
-        new_q = (1 - self._alpha) * old_q + self._alpha * (reward + self._gamma * best_next)
+
+        alpha, gamma = get_hyperparams_for_explorer(explr_idx)
+        new_q = (1 - alpha) * old_q + alpha * (reward + gamma * best_next)
         q[prev][action] = float(new_q)
         return q
 

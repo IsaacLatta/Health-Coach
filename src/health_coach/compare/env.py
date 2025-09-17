@@ -1,13 +1,10 @@
 import random
 import numpy as np
-import gym
-from gym import spaces
 from typing import Any, List, Dict, Callable, Tuple
 from pydantic import BaseModel
 from crewai.flow.flow import Flow
 
-from health_coach.backend.agents.flows.rl.flows import RLFlow
-from health_coach.rl_data_gen.drift import simulate_drift
+from health_coach.compare.flows import RLFlow
 
 import health_coach.config as cfg
 
@@ -38,7 +35,6 @@ class AgentQLearningEnvironment:
             res = self.rl_flow.kickoff()
             print(f"\n\n\n\nGOT {res}\n\n\n\n\n")
             if res is None:
-                # print("\n\n\n\nGOT NONE\n\n\n\n\n")
                 return 0
             return res
         except Exception as e:
