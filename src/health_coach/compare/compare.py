@@ -133,7 +133,7 @@ def run_agent_comparison(train_eps, val_eps, explorers):
             safe_metrics[key] = value
     
     print("Agent-augmented eval:", safe_metrics)
-    with open(cfg.COMPARISION_RESULTS_DIR + "/agent/agent_results.json", 'w') as f:
+    with open(cfg.COMPARISION_RESULTS_DIR + "/" + cfg.COMPARISON_RESULTS_FILE, 'w') as f:
         json.dump(safe_metrics, f, indent=2)
   
 

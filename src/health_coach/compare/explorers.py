@@ -153,7 +153,7 @@ def tune_explorers():
         tuned[tuner_name] = result
 
     print(f"Tuning Results:\n{tuned}")
-    with open(cfg.COMPARISION_RESULTS_DIR + "/explorers/" + cfg.COMPARISON_RESULTS_FILE, 'w') as f:
+    with open(cfg.COMPARISION_RESULTS_DIR + "/" + cfg.COMPARISON_RESULTS_FILE, 'w') as f:
         json.dump(tuned, f, indent=2)
 
 if __name__ == "__main__":
