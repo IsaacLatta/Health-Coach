@@ -1,5 +1,7 @@
 from crewai import Agent
 
+from health_coach.backend.flows.llm import get_embedder, get_llm
+
 shap_explainer_agent = Agent(
     name="shap_explainer",
     role="Feature Attribution Explainer",
@@ -14,6 +16,8 @@ shap_explainer_agent = Agent(
         "you only explain model behavior and contributing factors."
     ),
     verbose=True,
+    #llm=llm.get_llm(),
+    #embedder=llm.get_embedder()
 )
 
 risk_summary_agent = Agent(
@@ -30,4 +34,6 @@ risk_summary_agent = Agent(
     ),
     tools=[],
     verbose=True,
+    #llm=llm.get_llm(),
+    #embedder=llm.get_embedder()
 )

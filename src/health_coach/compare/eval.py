@@ -11,23 +11,23 @@ import health_coach.compare.rl_data_gen.drift as drift
 
 import health_coach.config as cfg
 
-RESULTS_DIR = Path(__file__).parents[3] / "results" / "comparison"
-RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+# RESULTS_DIR = Path(__file__).parents[3] / "results" / "comparison"
+# RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
-def make_output_path(prefix: str = "pure_results") -> Path:
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return RESULTS_DIR / f"{ts}_{prefix}.csv"
+# def make_output_path(prefix: str = "pure_results") -> Path:
+#     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+#     return RESULTS_DIR / f"{ts}_{prefix}.csv"
 
 def reward_function(prev_state: int, current_state: int) -> float:
     res = prev_state - current_state
     return res
 
-def save_results(results: List[Dict[str, Any]], prefix: str = "pure_results") -> Path:
-    output_path = make_output_path(prefix)
-    df = pd.DataFrame(results)
-    df.to_csv(output_path, index=False)
-    print(f"Saved results to {output_path}")
-    return output_path
+# def save_results(results: List[Dict[str, Any]], prefix: str = "pure_results") -> Path:
+#     output_path = make_output_path(prefix)
+#     df = pd.DataFrame(results)
+#     df.to_csv(output_path, index=False)
+#     print(f"Saved results to {output_path}")
+#     return output_path
 
 def print_results(results: List[Dict[str, Any]], explorer_name: str) -> None:
     runs = [r for r in results if r.get("strategy") == explorer_name]

@@ -1,5 +1,7 @@
 from crewai import Agent
 
+from health_coach.backend.flows.llm import get_llm, get_embedder 
+
 insights_agent = Agent(
     name="RL Insights Explainer",
     role="Agentic RL Reporter",
@@ -14,4 +16,6 @@ insights_agent = Agent(
         "is adapting the report behavior for this patient. Keep a neutral tone; do not "
         "suggest treatment."
     )
+    #llm=llm.get_llm(),
+    #embedder=llm.get_embedder()
 )

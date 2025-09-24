@@ -49,7 +49,6 @@ def process_results(results: List[Dict[str, Any]]) -> None:
 
         best_runs = groups[best_params]
         
-        # Convert numpy arrays to lists for JSON serialization
         json_safe_runs = []
         for run in best_runs:
             json_run = run.copy()
@@ -61,7 +60,6 @@ def process_results(results: List[Dict[str, Any]]) -> None:
 
         
         
-        # Store best results for this explorer
         best_results[explorer] = {
             "alpha": a_best,
             "gamma": g_best,
@@ -71,8 +69,7 @@ def process_results(results: List[Dict[str, Any]]) -> None:
         
         eval.print_results(best_runs, explorer)
     
-    # Save best results to JSON
-    with open(cfg.COMPARISION_RESULTS_DIR + "/" + cfg.COMPARISON_RESULTS_FILE, "w") as f:
+    with open(cfg.COMPARISION_RESULTS_DIR + "/pure/" + cfg.COMPARISON_RESULTS_FILE, "w") as f:
         json.dump(best_results, f, indent=2)
 
 def reward_function(prev_state: int, current_state: int) -> float:
@@ -133,7 +130,7 @@ def run_agent_comparison(train_eps, val_eps, explorers):
             safe_metrics[key] = value
     
     print("Agent-augmented eval:", safe_metrics)
-    with open(cfg.COMPARISION_RESULTS_DIR + "/" + cfg.COMPARISON_RESULTS_FILE, 'w') as f:
+    with open(cfg.COMPARISION_RESULTS_DIR + "/agent/" + cfg.COMPARISON_RESULTS_FILE, 'w') as f:
         json.dump(safe_metrics, f, indent=2)
   
 

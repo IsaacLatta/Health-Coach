@@ -7,6 +7,8 @@ from typing import Dict, Deque, Optional, Any, List
 import json
 import health_coach.config as cfg
 
+from health_coach.backend.flows.rl.tools.explorer_selector import get_hyperparams_for_explorer
+
 QTable = List[List[float]]
 
 class ContextService(ABC):
@@ -94,7 +96,7 @@ class InMemContextService(ContextService):
         q_np = np.array(qtable, dtype=float) if qtable is not None else None
         return self._snapshot(ctx, cur=cur, reward=reward, action=None, q_np=q_np)
 
-    def post_action(self, patient_id: str, prev: int, cur: int, reward: float, action: int, q: QTable) -> Any:
+    def post_action(self, explr_idx: int, patient_id: str, prev: int, cur: int, reward: float, action: int, q: QTable) -> Any:
         ctx = self._get(patient_id)
         ctx.prev_state, ctx.cur_state = prev, cur
         ctx.last_action, ctx.last_reward = int(action), float(reward)
@@ -106,6 +108,7 @@ class InMemContextService(ContextService):
         q_np = np.array(q, dtype=float) if q is not None else None
         if q_np is not None:
             best_next = float(np.max(q_np[cur]))
-            td = float(reward) + cfg.GAMMA * best_next - float(q_np[prev, action])
+            _, gamma = get_hyperparams_for_explorer(explr_idx)
+            td = float(reward) + gamma * best_next - float(q_np[prev, action])
             ctx.td_buf.append(td)
         return self._snapshot(ctx, cur=cur, reward=reward, action=action, q_np=q_np)

@@ -24,10 +24,10 @@ EPISODE_LENGTH = 5
 TRAIN_FRACTION: float = 0.8
 EVAL_FRACTION: float = 0.2
 
-COMPARISION_RESULTS_DIR="/home/isaac/Projects/Health-Coach/results"
-COMPARISON_RESULTS_FILE="rl_compare_short_episodes.json"
-ALPHA: float = 0.5
-GAMMA: float = 0.5
+COMPARISION_RESULTS_DIR="../results"
+COMPARISON_RESULTS_FILE="my_results.json"
+ALPHA: float = 0.4
+GAMMA: float = 0.9
 SHOULD_SAMPLE_HYPERPARAMS: bool = True
 
 ALPHA_RANGE: float = (0.01, 1.0)
@@ -35,7 +35,6 @@ GAMMA_RANGE: float = (0.90, 1.0)
 N_TRIALS = 10
 N_SEEDS = 3
 
-# Explorer params
 SOFTMAX_TEMP: float = 1.0
 MAXENT_ALPHA: float =  0.5
 THOMPSON_SIGMA: float = 0.1
@@ -69,7 +68,6 @@ EPSILON_END: float = 0.01
 EPSILON_DECAY_RATE: float = 0.9965
 
 EPSILON_CURRENT: float = EPSILON_START
-
 
 def update_epsilon() -> None:
     global EPSILON_CURRENT

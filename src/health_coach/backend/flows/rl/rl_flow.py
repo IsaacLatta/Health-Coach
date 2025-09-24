@@ -77,7 +77,7 @@ class RLFlow(Flow[RLState]):
                 )
             )
 
-        s.deps.context.post_action(s.patient_id, s.prev_state, s.curr_state, s.shaped_reward, s.action, qn)
+        s.deps.context.post_action(s.explr_idx, s.patient_id, s.prev_state, s.curr_state, s.shaped_reward, s.action, qn)
         s.result = {"action": s.action, "reward": s.shaped_reward, "next_state": s.curr_state}
         return s.result
 

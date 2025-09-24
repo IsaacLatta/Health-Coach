@@ -33,7 +33,6 @@ class AgentQLearningEnvironment:
         try:
             self.rl_flow.set_state(previous_state, current_state)
             res = self.rl_flow.kickoff()
-            print(f"\n\n\n\nGOT {res}\n\n\n\n\n")
             if res is None:
                 return 0
             return res

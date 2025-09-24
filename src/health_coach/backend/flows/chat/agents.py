@@ -1,5 +1,7 @@
 from crewai import Agent
 
+from health_coach.backend.flows.llm import get_embedder, get_llm 
+
 chat_agent = Agent(
     role="Clinician-facing explainer",
     goal=(
@@ -12,4 +14,6 @@ chat_agent = Agent(
         "learning configuration behavior for a single patient. You never recommend treatment."
     ),
     verbose=False,
+    #llm=llm.get_llm(),
+    #embedder=llm.get_embedder()
 )

@@ -88,7 +88,7 @@ class SimpleQLearningEngine(RLEngine):
             "context": context,
         }
 
-        agent = agents.RewardShapingAgent().create(max_iter=1, verbose=True)
+        agent = agents.SelectorAgent().create(max_iter=1, verbose=True)
         action_t = tasks.ShapeAction().create(agent)
         crew = Crew(
             agents=[agent],
@@ -100,7 +100,7 @@ class SimpleQLearningEngine(RLEngine):
         explorer_idx = self.safe_select(json_result, 6)
         action = execute_explorer(current_state, explorer_idx, self.q_table)
         self.alpha, self.gamma = get_hyperparams_for_explorer(explorer_idx)
-        self.ctx_engine.update(prev_state, current_state, reward, action, self.q_table)
+        self.ctx_engine.update(explorer_idx, prev_state, current_state, reward, action, self.q_table)
         return action
 
     def shape_reward(self, prev, cur, reward, context):

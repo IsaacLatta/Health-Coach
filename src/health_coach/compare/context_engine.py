@@ -5,6 +5,7 @@ from typing import Dict, Optional
 import numpy as np
 import health_coach.config as cfg
 
+from health_coach.backend.flows.rl.tools.explorer_selector import get_hyperparams_for_explorer
 
 class ContextEngine:
     """
@@ -30,6 +31,7 @@ class ContextEngine:
         self.q_table: Optional[np.ndarray] = None
 
     def update(self,
+               explr_idx: int,
                prev_state: int,
                current_state: int,
                reward: float,
@@ -60,8 +62,9 @@ class ContextEngine:
             and 0 <= self.prev_state < q_table.shape[0]
             and 0 <= self.current_state < q_table.shape[0]
         ):
+            _, gamma = get_hyperparams_for_explorer(explr_idx)
             best_next = float(np.max(q_table[self.current_state]))
-            td = reward + cfg.GAMMA * best_next - float(q_table[self.prev_state, self.last_action])
+            td = reward + gamma * best_next - float(q_table[self.prev_state, self.last_action])
             self.td_error_buffer.append(td)
 
     def generate_context(self) -> str:

@@ -43,7 +43,6 @@ SESSION_KEYS = {
     "backend_url": DEFAULT_BACKEND_URL,
     "demo_mode": False,
     "last_run": None,
-    # chat state (added)
     "chat_history": [],
     "chat_open": False,
 }
@@ -61,65 +60,9 @@ def risk_badge(label: str) -> str:
     return f'<span class="badge {cls}">{label.title()}</span>'
 
 def post_json(url: str, payload: Dict[str, Any], timeout: int = 30) -> Dict[str, Any]:
-    if st.session_state.get("demo_mode", False) or requests is None:
-        return mock_run_response(payload)
     resp = requests.post(url, json=payload, timeout=timeout)
     resp.raise_for_status()
     return resp.json()
-
-def mock_run_response(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Deterministic, lightweight mock for front-end dev without backend.
-    Returns structure compatible with /api/report.
-    """
-    patient = payload.get("patient", {})
-    feats = payload.get("features", {})
-    numeric_vals = [
-        float(v) for v in feats.values()
-        if isinstance(v, (int, float)) or str(v).replace(".", "", 1).isdigit()
-    ]
-    avg = sum(numeric_vals) / len(numeric_vals) if numeric_vals else 0.42
-    prob = max(0.01, min(0.99, (avg % 1.0)))
-    label = "low" if prob < 0.33 else ("medium" if prob < 0.66 else "high")
-
-    shap_items = []
-    for i, (k, v) in enumerate(list(feats.items())[:5]):
-        phi = round(((hash(k) % 100) / 100.0 - 0.5) * 0.2, 3)
-        shap_items.append({
-            "feature": k,
-            "value": v,
-            "phi": phi,
-            "reason": f"{k} influenced risk by {phi:+}."
-        })
-    if not shap_items:
-        shap_items = [
-            {"feature": "placeholder_feature", "value": 1, "phi": 0.07, "reason": "Example contribution."}
-        ]
-
-    run_id = str(uuid4())
-    created_at = datetime.now(timezone.utc).isoformat()
-    html = f"""
-    <div style='font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;padding:16px'>
-      <h2 style='margin-top:0'>Patient Risk Report</h2>
-      <p><strong>Patient:</strong> {patient.get('name','Unknown')} &nbsp; • &nbsp;
-         <strong>ID:</strong> {patient.get('id','-')} &nbsp; • &nbsp;
-         <strong>Age:</strong> {patient.get('age','-')} &nbsp; • &nbsp;
-         <strong>Generated:</strong> {created_at}</p>
-      <hr/>
-      <h3>Overall Risk</h3>
-      <p>Probability: <strong>{prob:.1%}</strong> &nbsp; Label: <strong>{label.title()}</strong></p>
-      <h3>Key Factors</h3>
-      <ul>
-        {''.join([f"<li><strong>{it['feature']}</strong>: {it['reason']}</li>" for it in shap_items])}
-      </ul>
-      <p style='color:#64748b'>This is a prototype report. For demo purposes only.</p>
-    </div>
-    """
-    return {
-        "run_id": run_id,
-        "risk": {"prob": prob, "label": label},
-        "shap": shap_items,
-        "report": {"html": html, "created_at": created_at},
-    }
 
 SAMPLE_PATIENT = {
     "id": "P-0002",
@@ -139,11 +82,8 @@ SAMPLE_FEATURES = {
 }
 
 st.sidebar.header("Settings")
-st.sidebar.text_input("Backend URL", value=st.session_state["backend_url"], key="backend_url")
-st.sidebar.checkbox("Demo mode (no backend)", value=st.session_state["demo_mode"], key="demo_mode")
-
-with st.sidebar.expander("Hooks / Extensibility", expanded=False):
-    st.markdown("- Agent chat (coming soon)\n- Patient history & trends\n- PDF export\n- Auth (role: doctor)")
+# st.sidebar.text_input("Backend URL", value=st.session_state["backend_url"], key="backend_url")
+# st.sidebar.checkbox("Demo mode (no backend)", value=st.session_state["demo_mode"], key="demo_mode")
 
 st.title("🫀 Agent Advisor")
 st.caption("Demo UI: doctor enters patient details + features → backend runs risk report + agentic RL (config tuning), then returns a readable report.")
@@ -261,7 +201,7 @@ if show:
     html = report.get("html", "")
     if html:
         with st.expander("View full report", expanded=True):
-            components.html(html, height=420, scrolling=True)
+            components.html(html, height=1000, scrolling=True)
 
         out_id = SAMPLE_PATIENT["id"]
         fname = f"risk_report_{out_id}_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.html"
