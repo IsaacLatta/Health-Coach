@@ -27,13 +27,13 @@ resources/data/db/*.db
 resources/data/Heart_Disease_Prediction.csv:Zone.Identifier
 
 results/agent/*
-results/agent/.gitkeep
+!results/agent/.gitkeep
 
 results/explorer/*
-results/explorer/.gitkeep
+!results/explorer/.gitkeep
 
 results/pure/*
-results/pure/.gitkeep
+!results/pure/.gitkeep
 
 
 
