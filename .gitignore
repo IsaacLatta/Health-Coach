@@ -22,6 +22,8 @@ uv.lock
 !out/.gitkeep
 out/*
 
+resources/data/db/*.db
+
 resources/data/Heart_Disease_Prediction.csv:Zone.Identifier
 
 results/agent/*
