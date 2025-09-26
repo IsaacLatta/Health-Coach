@@ -13,7 +13,7 @@ from .flows.rl.dependencies import RLDeps
 from .flows.chat.dependencies import ChatDeps
 
 from .services.context import InMemContextService
-from .services.rl import QLearningRLService
+from .services.rl import QLearningRLService, PureRLService
 from .flows.rl.tools.explorer_factories import get_factories
 
 from .flows.insights.dependencies import InsightsDeps
@@ -43,13 +43,8 @@ def create_app() -> Flask:
     def reward_fn(prev: int, cur: int) -> float:
         return 1.0 if cur < prev else (-1.0 if cur > prev else 0.0)
 
-    rl_service = QLearningRLService(
-        explorers=explorers,
-        reward_fn=reward_fn,
-        alpha=getattr(cfg, "Q_ALPHA", 0.4),
-        gamma=getattr(cfg, "Q_GAMMA", 0.9),
-        verbose=True,
-    )
+    alpha, gamma = cfg.SOFTMAX_HYPERPARAMS
+    rl_service = PureRLService(reward_fn=reward_fn, alpha=alpha, gamma=gamma)
 
     rl_deps = (
         RLDeps.make()

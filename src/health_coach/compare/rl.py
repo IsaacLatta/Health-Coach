@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 import health_coach.compare.tasks as tasks
 import health_coach.compare.agents as agents
 import health_coach.config as cfg
-from health_coach.backend.flows.rl.tools.explorer_selector import execute_explorer, get_hyperparams_for_explorer
+from health_coach.backend.flows.rl.tools.explorer_selector import execute_explorer, get_hyperparams_for_explorer, softmax_fn
 from health_coach.compare.context_engine import ContextEngine
 
 class QLearningState(BaseModel):
@@ -109,3 +109,41 @@ class SimpleQLearningEngine(RLEngine):
     def save_state(self, prev, action, reward, cur):
         best_next = self.q_table[cur].max()
         self.q_table[prev, action] = self.alpha * (reward + self.gamma * best_next) + (1 - self.alpha)*self.q_table[prev, action]
+
+SOFTMAX_IDX = 1
+
+class PureQLearning(RLEngine):
+    def __init__(
+            self, 
+            reward_fn: Callable[[int, int], float],
+            alpha: float, 
+            gamma: float
+        ):
+        self.q_table = np.zeros((cfg.Q_STATES, cfg.Q_ACTIONS), dtype=float)
+        self.reward_fn = reward_fn
+        self.alpha = alpha
+        self.gamma = gamma
+        self.verbose = True
+        self.ctx_engine = ContextEngine()
+
+    def compute_env_reward(self, prev: int, curr: int):
+        return self.reward_fn(prev, curr)
+
+    def possible_actions(self) -> List[int]:
+        return list(range(cfg.Q_ACTIONS))
+
+    def generate_context(self, prev, cur, reward) -> str:
+            return "Unavailable"
+
+    def shape_action(self, prev_state: int, current_state: int, reward: float, context: str) -> int:
+        action = execute_explorer(current_state, SOFTMAX_IDX, self.q_table)
+        self.ctx_engine.update(SOFTMAX_IDX, prev_state, current_state, reward, action, self.q_table)
+        return action
+
+    def shape_reward(self, prev, cur, reward, context):
+        return reward
+    
+    def save_state(self, prev, action, reward, cur):
+        best_next = self.q_table[cur].max()
+        self.q_table[prev, action] = self.alpha * (reward + self.gamma * best_next) + (1 - self.alpha)*self.q_table[prev, action]
+

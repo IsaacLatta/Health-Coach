@@ -5,6 +5,7 @@ from crewai.flow.flow import Flow, start, listen, and_
 from .dependencies import RLDeps
 from health_coach.backend.stores.transitions import Transition
 
+
 def _discretize(prob: float, bins: int) -> int:
     s = int(float(prob) * bins)
     return max(0, min(bins - 1, s))
@@ -80,7 +81,6 @@ class RLFlow(Flow[RLState]):
         s.deps.context.post_action(s.explr_idx, s.patient_id, s.prev_state, s.curr_state, s.shaped_reward, s.action, qn)
         s.result = {"action": s.action, "reward": s.shaped_reward, "next_state": s.curr_state}
         return s.result
-
 
 def call_rl_flow(deps: RLDeps, patient_id, prev_state: int, curr_state: int) -> dict:
     flow = RLFlow()

@@ -170,8 +170,33 @@ def thompson(current_state: int) -> int:
 
 
 def maxent_fn(current_state: int, q_table: np.ndarray, alpha: float = cfg.MAXENT_ALPHA) -> int:
-    # Alias to softmax with temperature=alpha
-    return softmax_fn(current_state=current_state, q_table=q_table, temperature=float(alpha))
+    """
+    Max-entropy explorer: softmax with temperature=alpha,
+    then a tiny uniform mix with weight derived from alpha (no new config).
+    """
+    q = to_nd(q_table)
+    s = retrieve_state_index(current_state)
+    t = max(float(alpha), 1e-8)
+
+    logits = q[s] / t
+    logits = logits - np.max(logits)
+    exp_logits = np.exp(logits)
+    z = float(np.sum(exp_logits))
+    probs = exp_logits / (z if z > 0.0 else 1.0)
+
+    # Entropy boost: mix with uniform using the SAME alpha (clipped small)
+    mix = float(alpha)
+    if probs.size > 1:
+        mix = min(max(mix, 0.0), 0.25)        # cap at 25% just in case
+        probs = (1.0 - mix) * probs + mix / probs.size
+        probs = probs / probs.sum()           # defensive renorm
+
+    return int(np.random.choice(len(probs), p=probs))
+
+
+# def maxent_fn(current_state: int, q_table: np.ndarray, alpha: float = cfg.MAXENT_ALPHA) -> int:
+#     # Alias to softmax with temperature=alpha
+#     return softmax_fn(current_state=current_state, q_table=q_table, temperature=float(alpha))
 
 
 @tool

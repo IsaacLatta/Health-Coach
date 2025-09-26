@@ -5,7 +5,7 @@ from typing import List, Any, Callable, Dict
 from crewai import Crew, Process
 from health_coach.backend.flows.rl.agents import explorer_agent
 from health_coach.backend.flows.rl.tasks import select_explorer_task
-from health_coach.backend.flows.rl.tools.explorer_selector import get_hyperparams_for_explorer
+from health_coach.backend.flows.rl.tools.explorer_selector import get_hyperparams_for_explorer, softmax_fn
 
 QTable = List[List[float]]
 State = int
@@ -88,3 +88,34 @@ class QLearningRLService(RLService):
         except Exception:
             pass
         return default
+
+SOFTMAX = 1
+class PureRLService(RLService):
+    def __init__(self,
+                 reward_fn: Callable[[State, State], float],
+                 alpha: float,
+                 gamma: float):
+        self._reward_fn = reward_fn
+        self._alpha = alpha
+        self._gamma = gamma
+
+    def possible_actions(self) -> List[int]:
+        return list(range(len(self._explorers)))
+
+    def env_reward(self, prev: State, curr: State) -> float:
+        return float(self._reward_fn(prev, curr))
+
+    def select_action(self, prev: State, cur: State, reward: float, context: Any, qtable: QTable) -> Action:
+        action = softmax_fn(cur, qtable)
+        return (action, SOFTMAX)
+
+    def update(self, prev: State, action: Action, reward: float, cur: State, q: QTable, explr_idx: int = 0) -> QTable:
+        if not q or not isinstance(q[0], list):
+            raise ValueError("Q-table must be a list of lists[states][actions].")
+
+        best_next = max(q[cur]) if q[cur] else 0.0
+        old_q = q[prev][action]
+
+        new_q = (1 - self._alpha) * old_q + self._alpha * (reward + self._gamma * best_next)
+        q[prev][action] = float(new_q)
+        return q
