@@ -1,8 +1,8 @@
 import random
 import os
 
-# LLM_MODEL: str = "ollama/qwen3:4b"
-# LLM_BASE_URL: str = "http://localhost:11434"
+LLM_MODEL: str = "ollama/qwen3:4b"
+LLM_BASE_URL: str = "http://localhost:11434"
 
 ACTIONS = [
     "inc_top_k",       # 0

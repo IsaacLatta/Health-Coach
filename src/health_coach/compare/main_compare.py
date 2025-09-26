@@ -14,7 +14,7 @@ from health_coach.compare.rl_data_gen.generate import get_episodes
 from health_coach.compare.env import DriftOfflineEnvironment
 from health_coach.backend.flows.rl.dependencies import RLDeps
 from health_coach.backend.flows.insights.dependencies import InsightsDeps
-from health_coach.backend.services.prediction import SklearnPicklePredictionService
+from health_coach.backend.services.prediction import MockPredictionService
 from health_coach.backend.services.context import InMemContextService
 from health_coach.backend.stores.qtable import SQLiteQTables
 from health_coach.backend.stores.transitions import SQLiteTransitions
@@ -25,15 +25,24 @@ import health_coach.config as cfg
 import json
 
 def run_logging_loop(csv_path: str = "/home/isaac/Projects/Health-Coach/results/rl_insights_log.csv"):
-    # --- Build deps
     reward_fn = lambda prev, cur: 1.0 if cur < prev else -1.0 if cur > prev else 0.0
     rl_service = PureRLService(reward_fn, *cfg.SOFTMAX_HYPERPARAMS)
 
+    cfg.print_config()
+
+    # --- Episodes first
+    episodes = get_episodes(num_trend=int(cfg.NUM_EPISODES*2/3),
+                            num_random=int(cfg.NUM_EPISODES*1/3))
+
+    # Now mock pred can replay them
+    mock_pred = MockPredictionService(episodes)
+
+    # --- Build deps
     rl_deps = (
         RLDeps.make()
         .with_qtables(SQLiteQTables(cfg.Q_STATES, cfg.Q_ACTIONS))
         .with_transitions(SQLiteTransitions())
-        .with_prediction(SklearnPicklePredictionService())
+        .with_prediction(mock_pred)
         .with_context(InMemContextService())
         .with_rl(rl_service)
         .with_configs(SQLiteConfigs())
@@ -42,15 +51,13 @@ def run_logging_loop(csv_path: str = "/home/isaac/Projects/Health-Coach/results/
 
     insights_deps = (
         InsightsDeps.make()
-        .with_prediction(SklearnPicklePredictionService())
+        .with_prediction(mock_pred)
         .with_configs(SQLiteConfigs())
         .with_transitions(SQLiteTransitions())
         .with_qtables(SQLiteQTables(cfg.Q_STATES, cfg.Q_ACTIONS))
         .with_context(InMemContextService())
         .ensure()
     )
-
-    cfg.print_config()
 
     # --- CSV header
     fieldnames = [
@@ -66,10 +73,6 @@ def run_logging_loop(csv_path: str = "/home/isaac/Projects/Health-Coach/results/
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
 
-        # --- Episodes
-        episodes = get_episodes(num_trend=int(cfg.NUM_EPISODES*2/3),
-                                num_random=int(cfg.NUM_EPISODES*1/3))
- 
         env = DriftOfflineEnvironment(
             state_mapper=lambda p: int(p * cfg.Q_STATES),
             action_to_noise_mapper=lambda a: 0.01 * (a or 0),
@@ -87,27 +90,25 @@ def run_logging_loop(csv_path: str = "/home/isaac/Projects/Health-Coach/results/
                 rl_res = call_rl_flow(rl_deps, f"p{epi_idx}", env.prev_state, next_state)
                 action = rl_res["action"]
 
-                # Current prob + state
+                # Current prob + state (replayed from trajectory)
                 prob = ep[min(step, len(ep)-1)]
                 state = int(prob * cfg.Q_STATES)
 
-                # Insights flow
-                features = {"prob": prob}
+                # Insights
+                features = {"id": f"p{epi_idx}"}
                 insights_res = call_insights_flow({"id": f"p{epi_idx}", "features": features}, insights_deps)
 
-                # Context snapshot (JSON → dict)
+                # Context snapshot
                 ctx_json = rl_res.get("context_json")
                 ctx_metrics = {}
                 if ctx_json:
                     try:
                         ctx_metrics = json.loads(ctx_json)
                     except Exception:
-                        ctx_metrics = {}
+                        pass
 
-                # Narrative
                 narrative = insights_res.get("summary", {}).get("narrative", "")
 
-                # Write row
                 row = {
                     "episode": epi_idx,
                     "step": step,
@@ -117,14 +118,13 @@ def run_logging_loop(csv_path: str = "/home/isaac/Projects/Health-Coach/results/
                     "reward": reward,
                     "narrative": narrative,
                 }
-
-                # Add context metrics (fill missing with None)
                 for k in fieldnames:
                     if k in ctx_metrics:
                         row[k] = ctx_metrics[k]
 
                 writer.writerow(row)
                 step += 1
+
 
 
 

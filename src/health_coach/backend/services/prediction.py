@@ -142,3 +142,23 @@ class SklearnPicklePredictionService(PredictionService):
         row = self._encode_row(features)
         proba = self._model.predict_proba([row])[0][1]
         return float(proba)
+
+class MockPredictionService(PredictionService):
+    def __init__(self, episodes: list[list[float]]):
+        # episodes: list of trajectories (list of probabilities per step)
+        self.episodes = episodes
+        self.indices = [0] * len(episodes)  # step counters per episode
+
+    def predict(self, features: Dict[str, Any]) -> float:
+        """
+        Expect features["episode_id"] to tell us which trajectory.
+        We just serve the next probability in that trajectory.
+        """
+        epi_id = int(str(features.get("id", 0)).replace("p", ""))
+        idx = self.indices[epi_id]
+        traj = self.episodes[epi_id]
+
+        # Clamp index
+        prob = traj[min(idx, len(traj)-1)]
+        self.indices[epi_id] = min(idx + 1, len(traj)-1)
+        return float(prob)

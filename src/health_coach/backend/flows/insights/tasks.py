@@ -28,11 +28,17 @@ insights_task = Task(
     description=(
         "You are given RL metrics for a single patient:\n"
         "{metrics_json}\n\n"
-        "Write a short, clinician-friendly explanation (no medical advice):\n"
+        "Write a verbose, descriptive, meaningful, clinician-friendly explanation (no medical advice):\n"
         "1) What the system observed (margins to thresholds, volatility).\n"
         "2) How configuration changed vs defaults and why that might help.\n"
         "3) Which actions tended to reduce risk (positive reward).\n"
-        "Keep 3–5 sentences total, neutral tone. Also provide 3–5 concise bullets."
+        "4) What information does this tell us about this patient's previous outcomes."
+        "5) What could it mean for future care?"
+        "6) What subtle, or perhaps deep insight is the RL system indicating, translated to clinician language"
+        "Note that the consumer of this output is not a mathmatician or data scientist, the are a healthcare professional, so answer with the stats + what they indicate."
+        "Your goal is translate the RL machine into doctor lanaguage in an organized fashion, consise with bullets and short paragraphs. Should be a"
+        " quantitative but also intuitive explanation, and digestable to a physician."
+        "Also provide 3–5 concise bullets."
     ),
     agent=insights_agent,
     output_pydantic=InsightsSummary,
